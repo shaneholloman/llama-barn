@@ -2,7 +2,7 @@
 
 Run local LLMs on your Mac with a simple menu bar app. Launch any model with a single click, then chat with it via the built-in web UI or connect to it via the built-in REST API. LlamaBarn automatically configures models based on your Mac's hardware to ensure optimal performance and stability.
 
-Get it from [Releases ↗](https://github.com/ggml-org/LlamaBarn/releases)
+Install with `brew install --cask llamabarn` or download from [Releases ↗](https://github.com/ggml-org/LlamaBarn/releases)
 
 ![LlamaBarn](https://github.com/user-attachments/assets/9ff133d8-6a65-43d5-9672-5eb58da0dd0e)
 
