@@ -91,7 +91,6 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     rightStack.alignment = .centerY
 
     let rootStack = NSStackView(views: [leading, spacer, rightStack])
-    rootStack.translatesAutoresizingMaskIntoConstraints = false
     rootStack.orientation = .horizontal
     rootStack.spacing = 6
     rootStack.alignment = .centerY
@@ -101,6 +100,8 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     deleteLabel.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(deleteLabel)
 
+    rootStack.pinToSuperview()
+
     NSLayoutConstraint.activate([
       iconView.widthAnchor.constraint(equalToConstant: Layout.iconViewSize),
       iconView.heightAnchor.constraint(equalToConstant: Layout.iconViewSize),
@@ -109,10 +110,6 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       cancelImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
 
       progressLabel.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.progressWidth),
-      rootStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-      rootStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-      rootStack.topAnchor.constraint(equalTo: contentView.topAnchor),
-      rootStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
       // Position delete label at the bottom right, aligned with line 2
       deleteLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
@@ -168,8 +165,15 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
     // Progress and cancel button only for downloading
     let isDownloading = modelManager.downloadProgress(for: model) != nil
-    modelNameLabel.attributedStringValue = makeModelNameAttributedString(
-      isDownloading: isDownloading)
+
+    // Use secondary color for downloading models, primary for installed
+    let familyColor: NSColor = isDownloading ? Typography.secondaryColor : Typography.primaryColor
+    modelNameLabel.attributedStringValue = ModelMetadataFormatters.makeModelName(
+      family: model.family,
+      size: model.sizeLabel,
+      familyColor: familyColor
+    )
+
     metadataLabel.attributedStringValue = ModelMetadataFormatters.makeMetadataTextOnly(for: model)
 
     if let progress = modelManager.downloadProgress(for: model) {
@@ -203,26 +207,6 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
   private func makeDeleteButtonText() -> NSAttributedString {
     MetadataLabel.makeIconOnly(icon: Symbols.trash, color: Typography.tertiaryColor)
-  }
-
-  private func makeModelNameAttributedString(isDownloading: Bool) -> NSAttributedString {
-    let result = NSMutableAttributedString()
-
-    // Use secondary color for downloading models
-    let familyColor: NSColor = isDownloading ? Typography.secondaryColor : Typography.primaryColor
-
-    // Family name in primary style
-    result.append(
-      NSAttributedString(
-        string: model.family, attributes: Typography.makePrimaryAttributes(color: familyColor)))
-
-    // Size in primary font with secondary color
-    result.append(
-      NSAttributedString(
-        string: " \(model.sizeLabel)",
-        attributes: Typography.makePrimaryAttributes(color: Typography.secondaryColor)))
-
-    return result
   }
 
   @objc private func performDelete() {

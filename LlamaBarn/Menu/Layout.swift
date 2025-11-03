@@ -31,6 +31,31 @@ extension NSView {
     layer?.setBackgroundColor(color, in: self)
     layer?.cornerRadius = cornerRadius
   }
+
+  /// Pins this view to all edges of its superview with optional padding.
+  /// Sets translatesAutoresizingMaskIntoConstraints to false automatically.
+  func pinToSuperview(
+    top: CGFloat = 0,
+    leading: CGFloat = 0,
+    trailing: CGFloat = 0,
+    bottom: CGFloat = 0
+  ) {
+    // Fail gracefully if no superview exists (shouldn't happen in normal usage)
+    guard let superview = superview else { return }
+    // Required to use Auto Layout constraints; must be set before activating constraints
+    translatesAutoresizingMaskIntoConstraints = false
+    // Batch activate all constraints together for better performance than activating individually
+    NSLayoutConstraint.activate([
+      // Leading/trailing are localization-aware (adapt for RTL languages)
+      leadingAnchor.constraint(equalTo: superview.leadingAnchor, constant: leading),
+      // Negative constant for trailing because padding is measured from the edge inward
+      trailingAnchor.constraint(equalTo: superview.trailingAnchor, constant: -trailing),
+      // Top constraint with positive padding moving down
+      topAnchor.constraint(equalTo: superview.topAnchor, constant: top),
+      // Negative constant for bottom because padding is measured from the edge inward
+      bottomAnchor.constraint(equalTo: superview.bottomAnchor, constant: -bottom),
+    ])
+  }
 }
 
 extension NSMenuItem {

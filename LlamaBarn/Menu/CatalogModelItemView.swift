@@ -67,22 +67,19 @@ final class CatalogModelItemView: ItemView {
 
     // Main horizontal row
     let hStack = NSStackView(views: [leading, spacer, statusIndicator])
-    hStack.translatesAutoresizingMaskIntoConstraints = false
     hStack.orientation = .horizontal
     hStack.spacing = 6
     hStack.alignment = .centerY
 
     contentView.addSubview(hStack)
 
+    hStack.pinToSuperview()
+
     NSLayoutConstraint.activate([
       iconView.widthAnchor.constraint(equalToConstant: Layout.iconViewSize),
       iconView.heightAnchor.constraint(equalToConstant: Layout.iconViewSize),
       statusIndicator.widthAnchor.constraint(equalToConstant: Layout.uiIconSize),
       statusIndicator.heightAnchor.constraint(equalToConstant: Layout.uiIconSize),
-      hStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-      hStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-      hStack.topAnchor.constraint(equalTo: contentView.topAnchor),
-      hStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
     ])
   }
   override func viewDidMoveToWindow() {
@@ -122,25 +119,17 @@ final class CatalogModelItemView: ItemView {
     }
   }
 
-  private func makeModelNameAttributedString(compatible: Bool) -> NSAttributedString {
-    let result = NSMutableAttributedString()
-
-    // Use secondary color for catalog models, tertiary for incompatible models
-    let textColor = compatible ? Typography.secondaryColor : Typography.tertiaryColor
-    let attributes = Typography.makePrimaryAttributes(color: textColor)
-
-    // Family name and size both use same color in catalog
-    result.append(NSAttributedString(string: model.family, attributes: attributes))
-    result.append(NSAttributedString(string: " \(model.sizeLabel)", attributes: attributes))
-
-    return result
-  }
-
   func refresh() {
     let compatible = Catalog.isModelCompatible(model)
 
-    // Title and basic display
-    labelField.attributedStringValue = makeModelNameAttributedString(compatible: compatible)
+    // Use secondary color for catalog models, tertiary for incompatible models
+    let textColor = compatible ? Typography.secondaryColor : Typography.tertiaryColor
+    labelField.attributedStringValue = ModelMetadataFormatters.makeModelName(
+      family: model.family,
+      size: model.sizeLabel,
+      familyColor: textColor,
+      sizeColor: textColor
+    )
 
     // Metadata text (second line)
     if compatible {

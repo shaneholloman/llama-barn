@@ -32,30 +32,21 @@ class ItemView: NSView {
 
   private func setupContainers() {
     wantsLayer = true
-    backgroundView.translatesAutoresizingMaskIntoConstraints = false
     backgroundView.wantsLayer = true
-    contentView.translatesAutoresizingMaskIntoConstraints = false
 
     addSubview(backgroundView)
     backgroundView.addSubview(contentView)
 
-    NSLayoutConstraint.activate([
-      backgroundView.leadingAnchor.constraint(
-        equalTo: leadingAnchor, constant: Layout.outerHorizontalPadding),
-      backgroundView.trailingAnchor.constraint(
-        equalTo: trailingAnchor, constant: -Layout.outerHorizontalPadding),
-      backgroundView.topAnchor.constraint(equalTo: topAnchor),
-      backgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-      contentView.leadingAnchor.constraint(
-        equalTo: backgroundView.leadingAnchor, constant: Layout.innerHorizontalPadding),
-      contentView.trailingAnchor.constraint(
-        equalTo: backgroundView.trailingAnchor, constant: -Layout.innerHorizontalPadding),
-      contentView.topAnchor.constraint(
-        equalTo: backgroundView.topAnchor, constant: Layout.verticalPadding),
-      contentView.bottomAnchor.constraint(
-        equalTo: backgroundView.bottomAnchor, constant: -Layout.verticalPadding),
-    ])
+    backgroundView.pinToSuperview(
+      leading: Layout.outerHorizontalPadding,
+      trailing: Layout.outerHorizontalPadding
+    )
+    contentView.pinToSuperview(
+      top: Layout.verticalPadding,
+      leading: Layout.innerHorizontalPadding,
+      trailing: Layout.innerHorizontalPadding,
+      bottom: Layout.verticalPadding
+    )
   }
 
   // MARK: - Highlight handling

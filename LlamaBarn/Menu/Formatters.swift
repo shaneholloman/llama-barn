@@ -147,4 +147,22 @@ enum ModelMetadataFormatters {
 
     return result
   }
+
+  /// Formats model name as "Family Size" with configurable colors.
+  /// Used by both installed and catalog model item views.
+  static func makeModelName(
+    family: String,
+    size: String,
+    familyColor: NSColor,
+    sizeColor: NSColor = Typography.secondaryColor
+  ) -> NSAttributedString {
+    let result = NSMutableAttributedString()
+    result.append(
+      NSAttributedString(
+        string: family, attributes: Typography.makePrimaryAttributes(color: familyColor)))
+    result.append(
+      NSAttributedString(
+        string: " \(size)", attributes: Typography.makePrimaryAttributes(color: sizeColor)))
+    return result
+  }
 }

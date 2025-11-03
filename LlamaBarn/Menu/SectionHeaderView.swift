@@ -21,27 +21,20 @@ final class SectionHeaderView: NSView {
     setAccessibilityRole(.staticText)
     setAccessibilityLabel(title)
 
-    container.translatesAutoresizingMaskIntoConstraints = false
-    label.translatesAutoresizingMaskIntoConstraints = false
     label.stringValue = title
 
     addSubview(container)
     container.addSubview(label)
 
-    NSLayoutConstraint.activate([
-      container.leadingAnchor.constraint(
-        equalTo: leadingAnchor, constant: Layout.outerHorizontalPadding),
-      container.trailingAnchor.constraint(
-        equalTo: trailingAnchor, constant: -Layout.outerHorizontalPadding),
-      container.topAnchor.constraint(equalTo: topAnchor),
-      container.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-      label.leadingAnchor.constraint(
-        equalTo: container.leadingAnchor, constant: Layout.innerHorizontalPadding),
-      label.trailingAnchor.constraint(
-        equalTo: container.trailingAnchor, constant: -Layout.innerHorizontalPadding),
-      label.topAnchor.constraint(equalTo: container.topAnchor, constant: 2),
-      label.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -2),
-    ])
+    container.pinToSuperview(
+      leading: Layout.outerHorizontalPadding,
+      trailing: Layout.outerHorizontalPadding
+    )
+    label.pinToSuperview(
+      top: 2,
+      leading: Layout.innerHorizontalPadding,
+      trailing: Layout.innerHorizontalPadding,
+      bottom: 2
+    )
   }
 }
