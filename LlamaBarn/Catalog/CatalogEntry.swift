@@ -15,8 +15,10 @@ struct CatalogEntry: Identifiable, Codable {
   /// Applied during memory calculations to account for loading overhead.
   let overheadMultiplier: Double
   let downloadUrl: URL  // Remote download URL
-  /// Optional additional model shards. When present, the first shard in `downloadUrl`
-  /// should be passed to `--model` and llama-server will discover the rest in the same directory.
+  /// Optional additional files required by the model:
+  /// - Vision models: mmproj file for multimodal projection
+  /// - Multi-part models: additional shards (e.g., 00002-of-00003.gguf)
+  /// The main model file in `downloadUrl` is passed to `--model`; llama-server discovers these in the same directory.
   let additionalParts: [URL]?
   let serverArgs: [String]  // Additional command line arguments for llama-server
   let icon: String  // Asset name for the model's brand logo

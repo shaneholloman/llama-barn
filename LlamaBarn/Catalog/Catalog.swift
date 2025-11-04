@@ -61,6 +61,19 @@ enum Catalog {
 
     func asEntry(family: ModelFamily, model: Model) -> CatalogEntry {
       let effectiveArgs = (family.serverArgs ?? []) + (model.serverArgs ?? []) + serverArgs
+
+      // Merge model's mmproj (if present) with build's additionalParts (for multi-part splits)
+      let effectiveParts: [URL]? = {
+        var parts: [URL] = []
+        if let mmproj = model.mmproj {
+          parts.append(mmproj)
+        }
+        if let buildParts = additionalParts {
+          parts.append(contentsOf: buildParts)
+        }
+        return parts.isEmpty ? nil : parts
+      }()
+
       return CatalogEntry(
         id: id
           ?? Catalog.makeId(family: family.name, modelLabel: model.label, build: self),
@@ -72,7 +85,7 @@ enum Catalog {
         ctxBytesPer1kTokens: ctxBytesPer1kTokens,
         overheadMultiplier: family.overheadMultiplier,
         downloadUrl: downloadUrl,
-        additionalParts: additionalParts,
+        additionalParts: effectiveParts,
         serverArgs: effectiveArgs,
         icon: family.iconName,
         color: family.color,
@@ -87,6 +100,7 @@ enum Catalog {
     let releaseDate: Date
     let ctxWindow: Int
     let serverArgs: [String]?  // optional defaults for all builds
+    let mmproj: URL?  // optional vision projection file for multimodal models
     let build: ModelBuild
     let quantizedBuilds: [ModelBuild]
   }
@@ -374,6 +388,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 8, day: 2))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gpt-oss-20b-mxfp4",
             quantization: "mxfp4",
@@ -394,6 +409,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 8, day: 2))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gpt-oss-120b-mxfp4",
             quantization: "mxfp4",
@@ -435,6 +451,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 4, day: 24))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3-qat-27b",
             quantization: "Q4_0",
@@ -455,6 +472,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 4, day: 21))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3-qat-12b",
             quantization: "Q4_0",
@@ -475,6 +493,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 4, day: 22))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3-qat-4b",
             quantization: "Q4_0",
@@ -495,6 +514,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 8, day: 27))!,
           ctxWindow: 131_072,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3-qat-1b",
             quantization: "Q4_0",
@@ -515,6 +535,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 8, day: 14))!,
           ctxWindow: 32_768,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3-qat-270m",
             quantization: "Q4_0",
@@ -547,6 +568,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 15))!,
           ctxWindow: 32_768,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3n-e4b-q8",
             quantization: "Q8_0",
@@ -581,6 +603,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 1))!,
           ctxWindow: 32_768,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "gemma-3n-e2b-q8",
             quantization: "Q8_0",
@@ -627,6 +650,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 7, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "qwen3-coder-30b-q8",
             quantization: "Q8_0",
@@ -673,6 +697,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 7, day: 1))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "qwen3-2507-30b-q8",
             quantization: "Q8_0",
@@ -707,6 +732,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 7, day: 1))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "qwen3-2507-4b-q8",
             quantization: "Q8_0",
@@ -753,6 +779,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 7, day: 1))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "qwen3-2507-thinking-30b-q8",
             quantization: "Q8_0",
@@ -787,6 +814,7 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 7, day: 1))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: nil,
           build: ModelBuild(
             id: "qwen3-2507-thinking-4b-q8",
             quantization: "Q8_0",
@@ -833,6 +861,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-32B-Instruct-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-instruct-32b-q8",
             quantization: "Q8_0",
@@ -843,12 +875,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF/resolve/main/Qwen3VL-32B-Instruct-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-32B-Instruct-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -862,12 +889,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF/resolve/main/Qwen3VL-32B-Instruct-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-32B-Instruct-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -877,6 +899,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Instruct-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-instruct-30b-q8",
             quantization: "Q8_0",
@@ -887,12 +913,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/main/Qwen3VL-30B-A3B-Instruct-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Instruct-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -906,12 +927,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/main/Qwen3VL-30B-A3B-Instruct-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Instruct-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -921,6 +937,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-instruct-8b-q8",
             quantization: "Q8_0",
@@ -931,12 +951,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -950,12 +965,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/Qwen3VL-8B-Instruct-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-8B-Instruct-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -965,6 +975,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-instruct-4b-q8",
             quantization: "Q8_0",
@@ -975,12 +989,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct-GGUF/resolve/main/Qwen3VL-4B-Instruct-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -994,12 +1003,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct-GGUF/resolve/main/Qwen3VL-4B-Instruct-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1009,6 +1013,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-instruct-2b-q8",
             quantization: "Q8_0",
@@ -1019,12 +1027,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1038,12 +1041,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/Qwen3VL-2B-Instruct-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct-GGUF/resolve/main/mmproj-Qwen3VL-2B-Instruct-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1065,6 +1063,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-32B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-32B-Thinking-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-thinking-32b-q8",
             quantization: "Q8_0",
@@ -1075,12 +1077,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-32B-Thinking-GGUF/resolve/main/Qwen3VL-32B-Thinking-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-32B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-32B-Thinking-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1094,12 +1091,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-32B-Thinking-GGUF/resolve/main/Qwen3VL-32B-Thinking-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-32B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-32B-Thinking-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1109,6 +1101,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Thinking-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-thinking-30b-q8",
             quantization: "Q8_0",
@@ -1119,12 +1115,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Thinking-GGUF/resolve/main/Qwen3VL-30B-A3B-Thinking-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Thinking-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1138,12 +1129,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Thinking-GGUF/resolve/main/Qwen3VL-30B-A3B-Thinking-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-30B-A3B-Thinking-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1153,6 +1139,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-8B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-8B-Thinking-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-thinking-8b-q8",
             quantization: "Q8_0",
@@ -1163,12 +1153,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3VL-8B-Thinking-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-8B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-8B-Thinking-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1182,12 +1167,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-8B-Thinking-GGUF/resolve/main/Qwen3VL-8B-Thinking-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-8B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-8B-Thinking-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1197,6 +1177,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-4B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-4B-Thinking-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-thinking-4b-q8",
             quantization: "Q8_0",
@@ -1207,12 +1191,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-4B-Thinking-GGUF/resolve/main/Qwen3VL-4B-Thinking-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-4B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-4B-Thinking-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1226,12 +1205,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-4B-Thinking-GGUF/resolve/main/Qwen3VL-4B-Thinking-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-4B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-4B-Thinking-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
@@ -1241,6 +1215,10 @@ enum CatalogFamilies {
           releaseDate: Calendar.current.date(from: DateComponents(year: 2025, month: 10, day: 31))!,
           ctxWindow: 262_144,
           serverArgs: nil,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/Qwen/Qwen3-VL-2B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-2B-Thinking-Q8_0.gguf"
+          )!,
           build: ModelBuild(
             id: "qwen3-vl-thinking-2b-q8",
             quantization: "Q8_0",
@@ -1251,12 +1229,7 @@ enum CatalogFamilies {
               string:
                 "https://huggingface.co/Qwen/Qwen3-VL-2B-Thinking-GGUF/resolve/main/Qwen3VL-2B-Thinking-Q8_0.gguf"
             )!,
-            additionalParts: [
-              URL(
-                string:
-                  "https://huggingface.co/Qwen/Qwen3-VL-2B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-2B-Thinking-Q8_0.gguf"
-              )!
-            ],
+            additionalParts: nil,
             serverArgs: []
           ),
           quantizedBuilds: [
@@ -1270,12 +1243,7 @@ enum CatalogFamilies {
                 string:
                   "https://huggingface.co/Qwen/Qwen3-VL-2B-Thinking-GGUF/resolve/main/Qwen3VL-2B-Thinking-Q4_K_M.gguf"
               )!,
-              additionalParts: [
-                URL(
-                  string:
-                    "https://huggingface.co/Qwen/Qwen3-VL-2B-Thinking-GGUF/resolve/main/mmproj-Qwen3VL-2B-Thinking-Q8_0.gguf"
-                )!
-              ],
+              additionalParts: nil,
               serverArgs: []
             )
           ]
