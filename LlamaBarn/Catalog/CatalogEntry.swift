@@ -4,7 +4,7 @@ import Foundation
 struct CatalogEntry: Identifiable, Codable {
   let id: String  // Unique identifier for the model
   let family: String  // Model family name (e.g., "Qwen3", "Gemma 3n")
-  let paramCountB: Double  // Model size in billions of parameters (e.g., 4.0, 30.0, 0.27)
+  let parameterCount: Int64  // Total model parameters (from HF API)
   let size: String  // Model size (e.g., "8B", "E4B")
   let releaseDate: Date  // Model release date
   let ctxWindow: Int  // Maximum context window in tokens
@@ -29,7 +29,7 @@ struct CatalogEntry: Identifiable, Codable {
   init(
     id: String,
     family: String,
-    paramCountB: Double,
+    parameterCount: Int64,
     size: String,
     releaseDate: Date,
     ctxWindow: Int,
@@ -45,7 +45,7 @@ struct CatalogEntry: Identifiable, Codable {
   ) {
     self.id = id
     self.family = family
-    self.paramCountB = paramCountB
+    self.parameterCount = parameterCount
     self.size = size
     self.releaseDate = releaseDate
     self.ctxWindow = ctxWindow

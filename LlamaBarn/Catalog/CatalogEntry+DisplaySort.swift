@@ -6,7 +6,7 @@ extension CatalogEntry {
   /// Used for both installed and available models lists to keep related models together.
   static func displayOrder(_ lhs: CatalogEntry, _ rhs: CatalogEntry) -> Bool {
     if lhs.family != rhs.family { return lhs.family < rhs.family }
-    if lhs.paramCountB != rhs.paramCountB { return lhs.paramCountB < rhs.paramCountB }
+    if lhs.parameterCount != rhs.parameterCount { return lhs.parameterCount < rhs.parameterCount }
     if lhs.isFullPrecision != rhs.isFullPrecision { return lhs.isFullPrecision }
     return lhs.id < rhs.id
   }
