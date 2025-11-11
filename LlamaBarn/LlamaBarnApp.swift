@@ -28,6 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
           "https://9a490c1c8715f73a0db5f65890165602@o509420.ingest.us.sentry.io/4510221602914304"
         options.debug = false
         options.releaseName = AppInfo.shortVersion
+        options.environment = AppInfo.shortVersion == "0.0.0" ? "internal" : "production"
 
         // Only track HTTP errors from external services (like Hugging Face), not localhost.
         // llama-server health checks return expected 503 responses during model loading.
