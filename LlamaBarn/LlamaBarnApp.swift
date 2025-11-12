@@ -61,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     updatesObserver = NotificationCenter.default.addObserver(
       forName: .LBCheckForUpdates, object: nil, queue: .main
     ) { [weak self] _ in
-      self?.updaterController?.updater.checkForUpdates()
+      self?.updaterController?.checkForUpdates(nil)
     }
 
     logger.info("LlamaBarn startup complete")

@@ -346,17 +346,27 @@ final class FooterSection {
 
     // Production builds show marketing version without build number;
     // dev/test builds (0.0.0) show only build number
-    let versionText: String
-    if AppInfo.shortVersion == "0.0.0" {
-      versionText = "build \(AppInfo.buildNumber) · llama.cpp \(AppInfo.llamaCppVersion)"
-    } else {
-      versionText = "\(AppInfo.shortVersion) · llama.cpp \(AppInfo.llamaCppVersion)"
-    }
+    let appVersionText =
+      AppInfo.shortVersion == "0.0.0"
+      ? "build \(AppInfo.buildNumber)"
+      : AppInfo.shortVersion
 
-    let versionLabel = Typography.makePrimaryLabel(versionText)
-    versionLabel.textColor = .tertiaryLabelColor
-    versionLabel.lineBreakMode = .byTruncatingMiddle
-    versionLabel.translatesAutoresizingMaskIntoConstraints = false
+    let versionButton = NSButton(title: "", target: self, action: #selector(checkForUpdates))
+    versionButton.isBordered = false
+    versionButton.translatesAutoresizingMaskIntoConstraints = false
+    versionButton.lineBreakMode = .byTruncatingMiddle
+    versionButton.attributedTitle = NSAttributedString(
+      string: appVersionText,
+      attributes: [
+        .font: Typography.primary,
+        .foregroundColor: NSColor.tertiaryLabelColor,
+      ])
+    (versionButton.cell as? NSButtonCell)?.highlightsBy = []
+
+    let llamaCppLabel = Typography.makePrimaryLabel(" · llama.cpp \(AppInfo.llamaCppVersion)")
+    llamaCppLabel.textColor = .tertiaryLabelColor
+    llamaCppLabel.lineBreakMode = .byTruncatingMiddle
+    llamaCppLabel.translatesAutoresizingMaskIntoConstraints = false
 
     let settingsButton = NSButton(
       title: "Settings", target: self, action: #selector(toggleSettings))
@@ -370,7 +380,8 @@ final class FooterSection {
     quitButton.bezelStyle = .texturedRounded
     quitButton.translatesAutoresizingMaskIntoConstraints = false
 
-    container.addSubview(versionLabel)
+    container.addSubview(versionButton)
+    container.addSubview(llamaCppLabel)
     container.addSubview(settingsButton)
     container.addSubview(quitButton)
 
@@ -379,9 +390,12 @@ final class FooterSection {
     NSLayoutConstraint.activate([
       container.widthAnchor.constraint(equalToConstant: Layout.menuWidth),
       container.heightAnchor.constraint(greaterThanOrEqualToConstant: 28),
-      versionLabel.leadingAnchor.constraint(
+      versionButton.leadingAnchor.constraint(
         equalTo: container.leadingAnchor, constant: horizontalPadding),
-      versionLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+      versionButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+
+      llamaCppLabel.leadingAnchor.constraint(equalTo: versionButton.trailingAnchor),
+      llamaCppLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
 
       settingsButton.trailingAnchor.constraint(
         equalTo: quitButton.leadingAnchor, constant: -8),
@@ -391,13 +405,17 @@ final class FooterSection {
         equalTo: container.trailingAnchor, constant: -horizontalPadding),
       quitButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
 
-      versionLabel.trailingAnchor.constraint(
+      llamaCppLabel.trailingAnchor.constraint(
         lessThanOrEqualTo: settingsButton.leadingAnchor, constant: -8),
     ])
 
     let item = NSMenuItem.viewItem(with: container)
     item.isEnabled = true
     menu.addItem(item)
+  }
+
+  @objc private func checkForUpdates() {
+    NotificationCenter.default.post(name: .LBCheckForUpdates, object: nil)
   }
 
   @objc private func toggleSettings() {
