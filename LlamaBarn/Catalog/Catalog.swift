@@ -226,7 +226,7 @@ enum Catalog {
       name: "GPT-OSS",
       series: "gpt",
       // Sliding-window family: use max context by default
-      serverArgs: ["-c", "0"],
+      serverArgs: ["-c", "0", "--temp", "1.0", "--top-p", "1.0"],
       sizes: [
         ModelSize(
           name: "20B",
@@ -430,7 +430,7 @@ enum Catalog {
     ModelFamily(
       name: "Qwen3-Coder",
       series: "qwen",
-      serverArgs: nil,
+      serverArgs: ["--temp", "0.7", "--top-p", "0.8", "--top-k", "20"],
       overheadMultiplier: 1.1,
       sizes: [
         ModelSize(
@@ -467,7 +467,7 @@ enum Catalog {
     ModelFamily(
       name: "Qwen3 2507",
       series: "qwen",
-      serverArgs: nil,
+      serverArgs: ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95", "--min-p", "0"],
       overheadMultiplier: 1.1,
       sizes: [
         ModelSize(
@@ -532,7 +532,7 @@ enum Catalog {
     ModelFamily(
       name: "Qwen3 2507 Thinking",
       series: "qwen",
-      serverArgs: nil,
+      serverArgs: ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95", "--min-p", "0"],
       overheadMultiplier: 1.1,
       sizes: [
         ModelSize(
@@ -597,7 +597,7 @@ enum Catalog {
     ModelFamily(
       name: "Qwen3-VL",
       series: "qwen",
-      serverArgs: nil,
+      serverArgs: ["--temp", "0.7", "--top-p", "0.8", "--top-k", "20"],
       overheadMultiplier: 1.1,
       sizes: [
         ModelSize(
@@ -734,7 +734,7 @@ enum Catalog {
     ModelFamily(
       name: "Qwen3-VL Thinking",
       series: "qwen",
-      serverArgs: nil,
+      serverArgs: ["--temp", "0.6", "--top-p", "0.95", "--top-k", "20"],
       overheadMultiplier: 1.1,
       sizes: [
         ModelSize(
