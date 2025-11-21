@@ -31,6 +31,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     self.server = server ?? .shared
     super.init()
     configureStatusItem()
+    setupObservers()
     showWelcomeIfNeeded()
   }
 
@@ -71,7 +72,6 @@ final class MenuController: NSObject, NSMenuDelegate {
   func menuWillOpen(_ menu: NSMenu) {
     guard menu === statusItem.menu else { return }
     modelManager.refreshDownloadedModels()
-    addObservers()
   }
 
   func menuDidClose(_ menu: NSMenu) {
@@ -79,11 +79,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     currentlyHighlightedView?.setHighlight(false)
     currentlyHighlightedView = nil
     preservingHighlightForFamily = nil
-    observer.removeAll()
     isSettingsVisible = false
-
-    collapsedFamilies.removeAll()
-    knownFamilies.removeAll()
   }
 
   func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
@@ -192,9 +188,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   }
 
   // Observe server and download changes while the menu is open.
-  private func addObservers() {
-    observer.removeAll()
-
+  private func setupObservers() {
     // Server started/stopped - update icon and views
     observeAndRefresh(.LBServerStateDidChange)
 
