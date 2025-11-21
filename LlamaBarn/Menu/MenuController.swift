@@ -12,11 +12,9 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   // Installed Section State
   private var installedViews: [InstalledModelItemView] = []
-  private weak var installedHeaderItem: NSMenuItem?
 
   // Catalog Section State
   private var catalogViews: [CatalogModelItemView] = []
-  private weak var catalogSeparatorItem: NSMenuItem?
   private var collapsedFamilies: Set<String> = []
   private var knownFamilies: Set<String> = []
 
@@ -139,8 +137,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   /// Rebuilds both installed and catalog sections to reflect changes while keeping submenus open.
   private func didChangeDownloadStatus(for _: CatalogEntry) {
     if let menu = statusItem.menu {
-      rebuildInstalledSection(in: menu)
-      updateCatalogItems(in: menu)
+      rebuildMenu(menu)
     }
     refresh()
   }
@@ -156,7 +153,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     // Set flag to prevent unhighlighting during rebuild
     preservingHighlightForFamily = highlightedFamily
 
-    updateCatalogItems(in: menu)
+    rebuildMenu(menu)
 
     // Re-highlight the family header if it was highlighted before rebuilding.
     // Use a short delay to let the menu system settle after the rebuild.
@@ -211,8 +208,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     observer.observe(.LBModelDownloadedListDidChange) { [weak self] _ in
       MainActor.assumeIsolated {
         if let menu = self?.statusItem.menu {
-          self?.rebuildInstalledSection(in: menu)
-          self?.updateCatalogItems(in: menu)
+          self?.rebuildMenu(menu)
         }
         self?.refresh()
       }
@@ -349,40 +345,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     guard !models.isEmpty else { return }
 
     let header = makeSectionHeaderItem("Installed")
-    installedHeaderItem = header
     menu.addItem(header)
 
     buildInstalledItems(models).forEach { menu.addItem($0) }
-  }
-
-  private func rebuildInstalledSection(in menu: NSMenu) {
-    let models = installedModels()
-
-    // Case 1: Section exists
-    if let installedHeaderItem, let headerIndex = menu.items.firstIndex(of: installedHeaderItem) {
-      menu.replaceItems(after: installedHeaderItem, with: buildInstalledItems(models))
-
-      if models.isEmpty {
-        // No models left - remove the header
-        menu.removeItem(at: headerIndex)
-        self.installedHeaderItem = nil
-      }
-      return
-    }
-
-    // Case 2: Section doesn't exist - add it if there are models
-    guard !models.isEmpty else { return }
-
-    // Find the insertion point after the header separator.
-    // The Installed section comes right after the menu header and its separator.
-    guard let insertIndex = menu.indexOfFirstSeparator.map({ $0 + 1 }) else { return }
-
-    let header = makeSectionHeaderItem("Installed")
-    installedHeaderItem = header
-    menu.insertItem(header, at: insertIndex)
-
-    let items = buildInstalledItems(models)
-    menu.insertItems(items, at: insertIndex + 1)
   }
 
   private func installedModels() -> [CatalogEntry] {
@@ -428,42 +393,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     knownFamilies = families
 
     let separator = NSMenuItem.separator()
-    catalogSeparatorItem = separator
     menu.addItem(separator)
 
     buildCatalogItems(availableModels).forEach { menu.addItem($0) }
-  }
-
-  private func updateCatalogItems(in menu: NSMenu) {
-    let availableModels = filterAvailableModels()
-
-    // Case 1: Section exists
-    if let catalogSeparatorItem,
-      let separatorIndex = menu.items.firstIndex(of: catalogSeparatorItem)
-    {
-      menu.replaceItems(after: catalogSeparatorItem, with: buildCatalogItems(availableModels))
-
-      if availableModels.isEmpty {
-        // No models left - remove the separator
-        menu.removeItem(at: separatorIndex)
-        self.catalogSeparatorItem = nil
-      }
-      return
-    }
-
-    // Case 2: Section doesn't exist - add it if there are models
-    guard !availableModels.isEmpty else { return }
-
-    // Find the footer separator by searching backwards from the end.
-    // Insert the catalog section (separator + items) right before it.
-    guard let insertIndex = menu.indexOfLastSeparator else { return }
-
-    let separator = NSMenuItem.separator()
-    catalogSeparatorItem = separator
-    menu.insertItem(separator, at: insertIndex)
-
-    let items = buildCatalogItems(availableModels)
-    menu.insertItems(items, at: insertIndex + 1)
   }
 
   private func filterAvailableModels() -> [CatalogEntry] {
