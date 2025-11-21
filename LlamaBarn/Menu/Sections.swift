@@ -11,16 +11,6 @@ private func makeSectionHeaderItem(_ title: String) -> NSMenuItem {
   return NSMenuItem.viewItem(with: view)
 }
 
-/// Removes all items after the given index until hitting a separator or end of menu
-private func removeItemsAfter(index: Int, in menu: NSMenu) {
-  let indexToRemove = index + 1
-  while indexToRemove < menu.items.count {
-    let item = menu.items[indexToRemove]
-    if item.isSeparatorItem { break }
-    menu.removeItem(at: indexToRemove)
-  }
-}
-
 @MainActor
 final class MenuHeaderSection {
   private let server: LlamaServer
@@ -91,21 +81,12 @@ final class InstalledSection {
 
     // Case 1: Section exists
     if let headerItem, let headerIndex = menu.items.firstIndex(of: headerItem) {
-      // Remove all installed items
-      removeItemsAfter(index: headerIndex, in: menu)
+      menu.replaceItems(after: headerItem, with: buildInstalledItems(models))
 
       if models.isEmpty {
         // No models left - remove the header
         menu.removeItem(at: headerIndex)
         self.headerItem = nil
-      } else {
-        // Re-add installed items
-        let items = buildInstalledItems(models)
-        var insertIndex = headerIndex + 1
-        for item in items {
-          menu.insertItem(item, at: insertIndex)
-          insertIndex += 1
-        }
       }
       return
     }
@@ -115,24 +96,14 @@ final class InstalledSection {
 
     // Find the insertion point after the header separator.
     // The Installed section comes right after the menu header and its separator.
-    var insertIndex = 0
-    for (index, item) in menu.items.enumerated() {
-      if item.isSeparatorItem {
-        insertIndex = index + 1
-        break
-      }
-    }
+    guard let insertIndex = menu.indexOfFirstSeparator.map({ $0 + 1 }) else { return }
 
     let header = makeSectionHeaderItem("Installed")
     headerItem = header
     menu.insertItem(header, at: insertIndex)
 
     let items = buildInstalledItems(models)
-    var itemInsertIndex = insertIndex + 1
-    for item in items {
-      menu.insertItem(item, at: itemInsertIndex)
-      itemInsertIndex += 1
-    }
+    menu.insertItems(items, at: insertIndex + 1)
   }
 
   func refresh() {
@@ -214,21 +185,12 @@ final class CatalogSection {
 
     // Case 1: Section exists
     if let separatorItem, let separatorIndex = menu.items.firstIndex(of: separatorItem) {
-      // Remove all catalog items (everything after the separator until the next separator or end)
-      removeItemsAfter(index: separatorIndex, in: menu)
+      menu.replaceItems(after: separatorItem, with: buildCatalogItems(availableModels))
 
       if availableModels.isEmpty {
         // No models left - remove the separator
         menu.removeItem(at: separatorIndex)
         self.separatorItem = nil
-      } else {
-        // Re-add catalog items
-        let items = buildCatalogItems(availableModels)
-        var insertIndex = separatorIndex + 1
-        for item in items {
-          menu.insertItem(item, at: insertIndex)
-          insertIndex += 1
-        }
       }
       return
     }
@@ -238,24 +200,14 @@ final class CatalogSection {
 
     // Find the footer separator by searching backwards from the end.
     // Insert the catalog section (separator + items) right before it.
-    var insertIndex = menu.items.count
-    for (index, item) in menu.items.enumerated().reversed() {
-      if item.isSeparatorItem {
-        insertIndex = index
-        break
-      }
-    }
+    guard let insertIndex = menu.indexOfLastSeparator else { return }
 
     let separator = NSMenuItem.separator()
     separatorItem = separator
     menu.insertItem(separator, at: insertIndex)
 
     let items = buildCatalogItems(availableModels)
-    var itemInsertIndex = insertIndex + 1
-    for item in items {
-      menu.insertItem(item, at: itemInsertIndex)
-      itemInsertIndex += 1
-    }
+    menu.insertItems(items, at: insertIndex + 1)
   }
 
   /// Filters catalog to show only compatible models that haven't been installed
