@@ -17,27 +17,6 @@ enum MemoryCalculator {
   /// Models must support at least this context window to launch.
   static let minimumCtxWindowTokens: Double = compatibilityCtxWindowTokens
 
-  /// Cache for compatibility checks since model properties and system memory are fixed at launch.
-  /// Lives for app lifetime, never invalidated. Cache keys include context length since we check
-  /// compatibility at different context windows (default 4k, max context, custom values).
-  private struct CompatibilityInfo {
-    let isCompatible: Bool
-    let incompatibilitySummary: String?
-  }
-
-  private struct CompatibilityCacheKey: Hashable {
-    let modelId: String
-    let tokens: Double
-  }
-
-  private struct UsableContextCacheKey: Hashable {
-    let modelId: String
-    let desiredTokens: Int?
-  }
-
-  private static var compatibilityCache: [CompatibilityCacheKey: CompatibilityInfo] = [:]
-  private static var usableContextCache: [UsableContextCacheKey: Int?] = [:]
-
   // MARK: - Public API
 
   /// Computes the usable context window (in tokens) that fits within the allowed memory budget.
@@ -50,11 +29,6 @@ enum MemoryCalculator {
     for model: CatalogEntry,
     desiredTokens: Int? = nil
   ) -> Int? {
-    let cacheKey = UsableContextCacheKey(modelId: model.id, desiredTokens: desiredTokens)
-    if let cached = usableContextCache[cacheKey] {
-      return cached
-    }
-
     let minimumTokens = Int(minimumCtxWindowTokens)
     guard model.ctxWindow >= minimumTokens else { return nil }
 
@@ -86,8 +60,6 @@ enum MemoryCalculator {
     var rounded = (floored / 1_024) * 1_024
     if rounded < minimumTokens { rounded = minimumTokens }
     if rounded > model.ctxWindow { rounded = model.ctxWindow }
-
-    usableContextCache[cacheKey] = rounded
 
     return rounded
   }
@@ -147,29 +119,22 @@ enum MemoryCalculator {
     return Double(systemMemoryMb) * memoryFraction
   }
 
-  /// Computes compatibility info for a model and caches the result
+  /// Computes compatibility info for a model
   private static func compatibilityInfo(
     for model: CatalogEntry,
     ctxWindowTokens: Double = compatibilityCtxWindowTokens
   ) -> CompatibilityInfo {
-    let cacheKey = CompatibilityCacheKey(modelId: model.id, tokens: ctxWindowTokens)
-    if let cached = compatibilityCache[cacheKey] { return cached }
-
     let minimumTokens = minimumCtxWindowTokens
 
     if Double(model.ctxWindow) < minimumTokens {
-      let info = CompatibilityInfo(
+      return CompatibilityInfo(
         isCompatible: false,
         incompatibilitySummary: "requires models with ≥4k context"
       )
-      compatibilityCache[cacheKey] = info
-      return info
     }
 
     if ctxWindowTokens > 0 && ctxWindowTokens > Double(model.ctxWindow) {
-      let info = CompatibilityInfo(isCompatible: false, incompatibilitySummary: nil)
-      compatibilityCache[cacheKey] = info
-      return info
+      return CompatibilityInfo(isCompatible: false, incompatibilitySummary: nil)
     }
 
     let sysMem = Catalog.systemMemoryMb
@@ -184,23 +149,23 @@ enum MemoryCalculator {
     }
 
     guard sysMem > 0 else {
-      let info = CompatibilityInfo(
+      return CompatibilityInfo(
         isCompatible: false,
         incompatibilitySummary: memoryRequirementSummary()
       )
-      compatibilityCache[cacheKey] = info
-      return info
     }
 
     let budgetMb = memoryBudget(systemMemoryMb: sysMem)
     let isCompatible = estimatedMemoryUsageMb <= UInt64(budgetMb)
 
-    let info = CompatibilityInfo(
+    return CompatibilityInfo(
       isCompatible: isCompatible,
       incompatibilitySummary: isCompatible ? nil : memoryRequirementSummary()
     )
-    compatibilityCache[cacheKey] = info
-    return info
   }
 
+  private struct CompatibilityInfo {
+    let isCompatible: Bool
+    let incompatibilitySummary: String?
+  }
 }

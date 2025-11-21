@@ -82,6 +82,7 @@ final class CatalogModelItemView: ItemView {
       statusIndicator.heightAnchor.constraint(equalToConstant: Layout.uiIconSize),
     ])
   }
+
   override func viewDidMoveToWindow() {
     super.viewDidMoveToWindow()
     guard rowClickRecognizer == nil else { return }
@@ -98,7 +99,6 @@ final class CatalogModelItemView: ItemView {
     guard bounds.contains(location) else { return }
     guard highlightEnabled else { return }
     handleAction()
-    // No refresh needed - membershipChanged() will trigger catalog rebuild and remove this item
   }
 
   private func handleAction() {
