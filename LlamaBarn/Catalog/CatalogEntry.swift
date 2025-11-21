@@ -68,9 +68,8 @@ struct CatalogEntry: Identifiable, Codable {
   /// Full name including quantization suffix (e.g., "Gemma 3 27B-Q4")
   var fullName: String {
     var name = displayName
-    if !isFullPrecision,
-      let quantLabel = Format.quantization(quantization).nilIfEmpty
-    {
+    let quantLabel = Format.quantization(quantization)
+    if !isFullPrecision && !quantLabel.isEmpty {
       name += "-\(quantLabel)"
     }
     return name
@@ -78,9 +77,8 @@ struct CatalogEntry: Identifiable, Codable {
 
   /// Size label with quantization suffix (e.g., "27B" or "27B-Q4")
   var sizeLabel: String {
-    guard !isFullPrecision,
-      let quantLabel = Format.quantization(quantization).nilIfEmpty
-    else {
+    let quantLabel = Format.quantization(quantization)
+    guard !isFullPrecision && !quantLabel.isEmpty else {
       return size
     }
     return "\(size)-\(quantLabel)"
@@ -140,5 +138,14 @@ struct CatalogEntry: Identifiable, Codable {
     }
 
     return modelsDirectory
+  }
+
+  /// Groups models by family, then by model size (e.g., 2B, 4B), then full-precision before quantized variants.
+  /// Used for both installed and available models lists to keep related models together.
+  static func displayOrder(_ lhs: CatalogEntry, _ rhs: CatalogEntry) -> Bool {
+    if lhs.family != rhs.family { return lhs.family < rhs.family }
+    if lhs.parameterCount != rhs.parameterCount { return lhs.parameterCount < rhs.parameterCount }
+    if lhs.isFullPrecision != rhs.isFullPrecision { return lhs.isFullPrecision }
+    return lhs.id < rhs.id
   }
 }
