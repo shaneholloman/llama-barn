@@ -124,7 +124,7 @@ struct CatalogEntry: Identifiable, Codable {
   }
 
   /// The directory where AI models are stored, creating it if necessary
-  static var modelStorageDirectory: URL {
+  static let modelStorageDirectory: URL = {
     let homeDirectory = FileManager.default.homeDirectoryForCurrentUser
     let modelsDirectory = homeDirectory.appendingPathComponent(".llamabarn", isDirectory: true)
 
@@ -138,7 +138,7 @@ struct CatalogEntry: Identifiable, Codable {
     }
 
     return modelsDirectory
-  }
+  }()
 
   /// Groups models by family, then by model size (e.g., 2B, 4B), then full-precision before quantized variants.
   /// Used for both installed and available models lists to keep related models together.
