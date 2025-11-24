@@ -15,7 +15,6 @@ final class MenuController: NSObject, NSMenuDelegate {
   private var knownFamilies: Set<String> = []
 
   private var isSettingsVisible = false
-  private let observer = NotificationObserver()
   private weak var currentlyHighlightedView: ItemView?
   private var preservingHighlightForFamily: String?
   private var welcomePopover: WelcomePopover?
@@ -174,7 +173,8 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   /// Helper to observe a notification and call refresh on the main actor
   private func observeAndRefresh(_ name: Notification.Name) {
-    observer.observe(name) { [weak self] _ in
+    NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) {
+      [weak self] _ in
       MainActor.assumeIsolated {
         self?.refresh()
       }
@@ -193,7 +193,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     observeAndRefresh(.LBModelDownloadsDidChange)
 
     // Model downloaded or deleted - rebuild both installed and catalog sections
-    observer.observe(.LBModelDownloadedListDidChange) { [weak self] _ in
+    NotificationCenter.default.addObserver(
+      forName: .LBModelDownloadedListDidChange, object: nil, queue: .main
+    ) { [weak self] _ in
       MainActor.assumeIsolated {
         if let menu = self?.statusItem.menu {
           self?.rebuildMenu(menu)
@@ -203,7 +205,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     }
 
     // User settings changed (e.g., show quantized models) - rebuild menu
-    observer.observe(.LBUserSettingsDidChange) { [weak self] _ in
+    NotificationCenter.default.addObserver(
+      forName: .LBUserSettingsDidChange, object: nil, queue: .main
+    ) { [weak self] _ in
       MainActor.assumeIsolated {
         if let menu = self?.statusItem.menu {
           self?.rebuildMenu(menu)
@@ -239,81 +243,17 @@ final class MenuController: NSObject, NSMenuDelegate {
   private func addFooter(to menu: NSMenu) {
     menu.addItem(.separator())
 
-    let container = NSView()
-    container.translatesAutoresizingMaskIntoConstraints = false
+    let footerView = FooterView(
+      onCheckForUpdates: { [weak self] in self?.checkForUpdates() },
+      onOpenSettings: { [weak self] in self?.toggleSettings() },
+      onQuit: { [weak self] in self?.quitApp() }
+    )
 
-    let appVersionText: String
-    #if DEBUG
-      // Debug builds show hammer emoji
-      appVersionText = "🔨"
-    #else
-      appVersionText =
-        AppInfo.shortVersion == "0.0.0"
-        // Internal builds (0.0.0) show build number
-        ? "build \(AppInfo.buildNumber)"
-        // Public builds show marketing version
-        : AppInfo.shortVersion
-    #endif
+    let hostingView = NSHostingView(rootView: footerView)
+    let size = hostingView.fittingSize
+    hostingView.frame = NSRect(origin: .zero, size: size)
 
-    let versionButton = NSButton(title: "", target: self, action: #selector(checkForUpdates))
-    versionButton.isBordered = false
-    versionButton.translatesAutoresizingMaskIntoConstraints = false
-    versionButton.lineBreakMode = .byTruncatingMiddle
-    versionButton.attributedTitle = NSAttributedString(
-      string: appVersionText,
-      attributes: [
-        .font: Typography.primary,
-        .foregroundColor: NSColor.tertiaryLabelColor,
-      ])
-    (versionButton.cell as? NSButtonCell)?.highlightsBy = []
-
-    let llamaCppLabel = Typography.makePrimaryLabel(" · llama.cpp \(AppInfo.llamaCppVersion)")
-    llamaCppLabel.textColor = .tertiaryLabelColor
-    llamaCppLabel.lineBreakMode = .byTruncatingMiddle
-    llamaCppLabel.translatesAutoresizingMaskIntoConstraints = false
-
-    let settingsButton = NSButton(
-      title: "Settings", target: self, action: #selector(toggleSettings))
-    settingsButton.font = Typography.secondary
-    settingsButton.bezelStyle = .texturedRounded
-    settingsButton.translatesAutoresizingMaskIntoConstraints = false
-    settingsButton.keyEquivalent = ","
-
-    let quitButton = NSButton(title: "Quit", target: self, action: #selector(quitApp))
-    quitButton.font = Typography.secondary
-    quitButton.bezelStyle = .texturedRounded
-    quitButton.translatesAutoresizingMaskIntoConstraints = false
-
-    container.addSubview(versionButton)
-    container.addSubview(llamaCppLabel)
-    container.addSubview(settingsButton)
-    container.addSubview(quitButton)
-
-    let horizontalPadding = Layout.outerHorizontalPadding + Layout.innerHorizontalPadding
-
-    NSLayoutConstraint.activate([
-      container.widthAnchor.constraint(equalToConstant: Layout.menuWidth),
-      container.heightAnchor.constraint(greaterThanOrEqualToConstant: 28),
-      versionButton.leadingAnchor.constraint(
-        equalTo: container.leadingAnchor, constant: horizontalPadding),
-      versionButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-
-      llamaCppLabel.leadingAnchor.constraint(equalTo: versionButton.trailingAnchor),
-      llamaCppLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-
-      settingsButton.trailingAnchor.constraint(
-        equalTo: quitButton.leadingAnchor, constant: -8),
-      settingsButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-
-      quitButton.trailingAnchor.constraint(
-        equalTo: container.trailingAnchor, constant: -horizontalPadding),
-      quitButton.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-
-      llamaCppLabel.trailingAnchor.constraint(
-        lessThanOrEqualTo: settingsButton.leadingAnchor, constant: -8),
-    ])
-
-    let item = NSMenuItem.viewItem(with: container)
+    let item = NSMenuItem.viewItem(with: hostingView)
     item.isEnabled = true
     menu.addItem(item)
   }
