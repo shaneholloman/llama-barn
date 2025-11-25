@@ -14,11 +14,11 @@ LlamaBarn is a tiny menu bar app that lets you install and run local LLMs with j
 
 LlamaBarn runs as a tiny menu bar app on your Mac.
 
-- **Select a model to install** -- LlamaBarn comes with a curated list of models and shows only models that can run on your Mac
-- **Select an installed model to run** -- LlamaBarn figures out the optimal settings for your Mac and starts a server at `http://localhost:2276`
-- **Use the model** -- the running model is available at `http://localhost:2276` with both a web UI and a standard API
+- **Select a model to install** -- only models that can run on your Mac are shown
+- **Select an installed model to run** -- configures and starts a server at `http://localhost:2276`
+- **Use the model through the API or web UI** -- both at `http://localhost:2276`
 
-Under the hood, LlamaBarn is a thin wrapper around `llama.cpp` and the `llama-server` that comes with it -- `llama-server` runs the API and web UI, while LlamaBarn handles model installation, configuration, and process management.
+Under the hood, LlamaBarn is a thin wrapper around `llama.cpp` and the `llama-server` that comes with it. `llama-server` runs the API and web UI, while LlamaBarn handles model installation, configuration, and process management.
 
 ## API endpoints
 
