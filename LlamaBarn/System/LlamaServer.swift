@@ -20,6 +20,7 @@ enum LlamaServerError: Error, LocalizedError {
 }
 
 /// Manages the llama-server binary process lifecycle and health monitoring
+@MainActor
 class LlamaServer {
   /// Singleton instance for app-wide server management
   static let shared = LlamaServer()
@@ -33,12 +34,6 @@ class LlamaServer {
   private var activeProcess: Process?
   private var healthCheckTask: Task<Void, Error>?
   private let logger = Logger(subsystem: Logging.subsystem, category: "LlamaServer")
-
-  // Lock protects shared state accessed from background threads (process termination handler).
-  // Unlike ModelManager and ModelDownloader (main-thread-only), LlamaServer needs synchronization because
-  // Process.terminationHandler runs on a background thread and accesses activeModelPath.
-  // State updates still dispatch to main for UI consistency.
-  private let stateLock = NSLock()
 
   enum ServerState: Equatable {
     case idle
@@ -133,24 +128,18 @@ class LlamaServer {
     do {
       try validatePaths(modelPath: modelPath)
     } catch let error as LlamaServerError {
-      DispatchQueue.main.async {
-        self.state = .error(error)
-      }
+      self.state = .error(error)
       return
     } catch {
-      DispatchQueue.main.async {
-        self.state = .error(.launchFailed("Validation failed"))
-      }
+      self.state = .error(.launchFailed("Validation failed"))
       return
     }
 
     state = .loading
 
-    stateLock.lock()
     activeModelPath = modelPath
     activeModelName = modelName
     activeCtxWindow = appliedCtxWindow
-    stateLock.unlock()
 
     let llamaServerPath = libFolderPath + "/llama-server"
 
@@ -203,20 +192,16 @@ class LlamaServer {
 
     // Set up termination handler for proper state management
     process.terminationHandler = { [weak self] proc in
-      guard let self = self else { return }
+      Task { @MainActor in
+        guard let self = self else { return }
 
-      self.stateLock.lock()
-      let currentState = self.state
-      let hadActiveModel = self.activeModelPath != nil
-      self.stateLock.unlock()
+        // Skip handler if we're already idle (intentional stop) or no model was running
+        guard self.state != .idle, self.activeModelPath != nil else { return }
 
-      // Skip handler if we're already idle (intentional stop) or no model was running
-      guard currentState != .idle, hadActiveModel else { return }
+        if self.activeProcess == proc {
+          self.cleanUpResources()
+        }
 
-      if self.activeProcess == proc {
-        self.cleanUpResources()
-      }
-      DispatchQueue.main.async {
         if proc.terminationStatus == 0 {
           self.state = .idle
         } else {
@@ -232,12 +217,10 @@ class LlamaServer {
     } catch {
       let errorMessage = "Process launch failed: \(error.localizedDescription)"
       logger.error("Failed to launch process: \(error)")
-      DispatchQueue.main.async {
-        self.state = .error(.launchFailed(errorMessage))
-        self.activeModelPath = nil
-        self.activeModelName = nil
-        self.activeCtxWindow = nil
-      }
+      self.state = .error(.launchFailed(errorMessage))
+      self.activeModelPath = nil
+      self.activeModelName = nil
+      self.activeCtxWindow = nil
       return
     }
     startHealthCheck(port: port)
@@ -249,11 +232,9 @@ class LlamaServer {
     memoryUsageMb = 0
     state = .idle
 
-    stateLock.lock()
     activeModelPath = nil
     activeModelName = nil
     activeCtxWindow = nil
-    stateLock.unlock()
 
     cleanUpResources()
   }
@@ -299,10 +280,7 @@ class LlamaServer {
 
   /// Checks if the specified model is currently active
   func isActive(model: CatalogEntry) -> Bool {
-    stateLock.lock()
-    let path = activeModelPath
-    stateLock.unlock()
-    return path == model.modelFilePath
+    return activeModelPath == model.modelFilePath
   }
 
   /// Convenience method to start server using a CatalogEntry
@@ -311,9 +289,7 @@ class LlamaServer {
       let reason =
         Catalog.incompatibilitySummary(model)
         ?? "insufficient memory for required context"
-      DispatchQueue.main.async {
-        self.state = .error(.launchFailed(reason))
-      }
+      self.state = .error(.launchFailed(reason))
       return
     }
 
@@ -334,9 +310,7 @@ class LlamaServer {
         Catalog.incompatibilitySummary(
           model, ctxWindowTokens: Double(model.ctxWindow))
         ?? "insufficient memory for requested context"
-      DispatchQueue.main.async {
-        self.state = .error(.launchFailed(reason))
-      }
+      self.state = .error(.launchFailed(reason))
       return
     }
 
@@ -440,8 +414,8 @@ class LlamaServer {
       let (_, response) = try await URLSession.shared.data(for: request)
 
       if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-        let memoryValue = measureMemoryUsageMb()
-        _ = await MainActor.run {
+        if let pid = activeProcess?.processIdentifier {
+          let memoryValue = await Task.detached { Self.measureMemoryUsageMb(pid: pid) }.value
           if self.state != .idle {
             self.state = .running
             self.memoryUsageMb = memoryValue
@@ -458,16 +432,18 @@ class LlamaServer {
   private func startMemoryMonitoring() {
     stopMemoryMonitoring()
 
-    memoryTask = Task { [weak self] in
+    memoryTask = Task.detached { [weak self] in
       guard let self = self else { return }
 
       while !Task.isCancelled {
-        guard await MainActor.run(body: { self.state }) == .running else {
-          break
+        let (isRunning, pid) = await MainActor.run {
+          (self.state == .running, self.activeProcess?.processIdentifier)
         }
 
-        let memoryValue = self.measureMemoryUsageMb()
-        _ = await MainActor.run {
+        guard isRunning, let pid = pid else { break }
+
+        let memoryValue = Self.measureMemoryUsageMb(pid: pid)
+        await MainActor.run {
           self.memoryUsageMb = memoryValue
         }
 
@@ -482,12 +458,10 @@ class LlamaServer {
   }
 
   /// Measures the current memory footprint of the llama-server process
-  func measureMemoryUsageMb() -> Double {
-    guard let process = activeProcess, process.isRunning else { return 0 }
-
+  nonisolated static func measureMemoryUsageMb(pid: Int32) -> Double {
     let task = Process()
     task.executableURL = URL(fileURLWithPath: "/usr/bin/footprint")
-    task.arguments = ["-s", String(process.processIdentifier)]
+    task.arguments = ["-s", String(pid)]
 
     let pipe = Pipe()
     task.standardOutput = pipe
@@ -558,8 +532,4 @@ class LlamaServer {
   }
 
   // Removed: getLlamaCppVersion() — MenuController reads version directly.
-
-  deinit {
-    stop()
-  }
 }
