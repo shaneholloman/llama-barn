@@ -80,6 +80,7 @@ enum Format {
 
   /// Formats model metadata text without icons (text only).
   /// Format: "2.53 GB · 3.1 GB mem · 128k ctx" (or "32k ctx capped" if limited).
+  /// Vision models include " · vision" at the end.
   static func modelMetadata(for model: CatalogEntry) -> NSAttributedString {
     let result = NSMutableAttributedString()
     let usableCtx = Catalog.usableCtxWindow(for: model)
@@ -111,6 +112,13 @@ enum Format {
       } else {
         result.append(NSAttributedString(string: "—", attributes: Typography.secondaryAttributes))
       }
+    }
+
+    // Vision indicator
+    if model.hasVisionSupport {
+      result.append(Format.metadataSeparator())
+      result.append(
+        NSAttributedString(string: "vision", attributes: Typography.secondaryAttributes))
     }
 
     return result

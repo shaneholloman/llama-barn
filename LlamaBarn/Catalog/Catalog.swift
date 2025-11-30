@@ -392,6 +392,10 @@ enum Catalog {
           parameterCount: 27_432_406_640,
           releaseDate: date(2025, 4, 24),
           ctxWindow: 131_072,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/ggml-org/gemma-3-27b-it-qat-GGUF/resolve/main/mmproj-model-f16-27B.gguf"
+          )!,
           build: ModelBuild(
             id: "gemma-3-qat-27b",
             quantization: "Q4_0",
@@ -408,6 +412,10 @@ enum Catalog {
           parameterCount: 12_187_325_040,
           releaseDate: date(2025, 4, 21),
           ctxWindow: 131_072,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/ggml-org/gemma-3-12b-it-qat-GGUF/resolve/main/mmproj-model-f16-12B.gguf"
+          )!,
           build: ModelBuild(
             id: "gemma-3-qat-12b",
             quantization: "Q4_0",
@@ -424,6 +432,10 @@ enum Catalog {
           parameterCount: 4_300_079_472,
           releaseDate: date(2025, 4, 22),
           ctxWindow: 131_072,
+          mmproj: URL(
+            string:
+              "https://huggingface.co/ggml-org/gemma-3-4b-it-qat-GGUF/resolve/main/mmproj-model-f16-4B.gguf"
+          )!,
           build: ModelBuild(
             id: "gemma-3-qat-4b",
             quantization: "Q4_0",

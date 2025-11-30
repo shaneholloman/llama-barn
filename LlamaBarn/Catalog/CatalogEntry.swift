@@ -97,6 +97,11 @@ struct CatalogEntry: Identifiable, Codable {
     String(quantization.prefix(2))
   }
 
+  /// Whether the model supports vision/multimodal capabilities
+  var hasVisionSupport: Bool {
+    mmprojUrl != nil
+  }
+
   /// Estimated runtime memory (in MB) when running at the model's maximum context window.
   var estimatedRuntimeMemoryMbAtMaxContext: UInt64 {
     let maxTokens =
