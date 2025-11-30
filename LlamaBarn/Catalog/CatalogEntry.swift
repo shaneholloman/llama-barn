@@ -68,16 +68,6 @@ struct CatalogEntry: Identifiable, Codable {
     "\(family) \(size)"
   }
 
-  /// Full name including quantization suffix (e.g., "Gemma 3 27B-Q4")
-  var fullName: String {
-    var name = displayName
-    let quantLabel = Format.quantization(quantization)
-    if !isFullPrecision && !quantLabel.isEmpty {
-      name += "-\(quantLabel)"
-    }
-    return name
-  }
-
   /// Size label with quantization suffix (e.g., "27B" or "27B-Q4")
   var sizeLabel: String {
     let quantLabel = Format.quantization(quantization)
@@ -90,11 +80,6 @@ struct CatalogEntry: Identifiable, Codable {
   /// Total size including all model files
   var totalSize: String {
     Format.gigabytes(fileSize)
-  }
-
-  /// Simplified quantization display (e.g., "Q4" from "Q4_K_M")
-  var simplifiedQuantization: String {
-    String(quantization.prefix(2))
   }
 
   /// Whether the model supports vision/multimodal capabilities

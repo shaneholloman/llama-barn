@@ -12,27 +12,12 @@ enum Catalog {
 
   /// Returns all catalog entries by traversing the hierarchy
   static func allModels() -> [CatalogEntry] {
-    families.flatMap { family in
-      family.sizes.flatMap { size in
-        ([size.build] + size.quantizedBuilds).map { build in
-          entry(family: family, size: size, build: build)
-        }
-      }
-    }
+    families.flatMap { $0.allModels }
   }
 
   /// Finds a catalog entry by ID by traversing the hierarchy
   static func findModel(id: String) -> CatalogEntry? {
-    for family in families {
-      for size in family.sizes {
-        for build in [size.build] + size.quantizedBuilds {
-          if build.id == id {
-            return entry(family: family, size: size, build: build)
-          }
-        }
-      }
-    }
-    return nil
+    allModels().first { $0.id == id }
   }
 
   // MARK: - Memory Calculations
