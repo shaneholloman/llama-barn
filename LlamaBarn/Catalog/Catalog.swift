@@ -82,7 +82,7 @@ enum Catalog {
     if cappedTokens < minimumCtxWindowTokens { return nil }
 
     let floored = Int(cappedTokens)
-    var rounded = (floored / 1_024) * 1_024
+    var rounded = floored
     if rounded < minimumTokens { rounded = minimumTokens }
     if rounded > model.ctxWindow { rounded = model.ctxWindow }
 
