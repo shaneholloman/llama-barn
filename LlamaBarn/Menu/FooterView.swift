@@ -8,6 +8,10 @@ struct FooterButtonStyle: ButtonStyle {
       .foregroundColor(Color(nsColor: .secondaryLabelColor))
       .padding(.horizontal, 5)
       .padding(.vertical, 2)
+      .background(
+        RoundedRectangle(cornerRadius: 5)
+          .fill(configuration.isPressed ? Color(nsColor: .lbSubtleBackground) : Color.clear)
+      )
       .overlay(
         RoundedRectangle(cornerRadius: 5)
           .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
