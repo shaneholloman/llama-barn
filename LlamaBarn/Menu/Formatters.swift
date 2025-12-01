@@ -128,8 +128,14 @@ enum Format {
     // Vision indicator
     if model.hasVisionSupport {
       result.append(Format.metadataSeparator())
-      result.append(
-        NSAttributedString(string: "vision", attributes: Typography.secondaryAttributes))
+
+      if let image = NSImage(
+        systemSymbolName: "eyeglasses", accessibilityDescription: "Vision Support")
+      {
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        result.append(NSAttributedString(attachment: attachment))
+      }
     }
 
     return result
