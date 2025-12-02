@@ -16,7 +16,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   private let iconView = IconView()
   private let modelNameLabel = Typography.makePrimaryLabel()
   private let metadataLabel = Typography.makeSecondaryLabel()
-  private let progressLabel = Typography.makeSecondaryLabel()
+  private let progressLabel: NSTextField = {
+    let label = Typography.makeSecondaryLabel()
+    label.font = Typography.primary
+    return label
+  }()
   private let cancelImageView = NSImageView()
   private let deleteImageView = NSImageView()
 
@@ -52,15 +56,14 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     if let img = NSImage(systemSymbolName: "xmark", accessibilityDescription: nil) {
       cancelImageView.image = img
     }
-    cancelImageView.symbolConfiguration = .init(pointSize: 12, weight: .regular)
+    cancelImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
     cancelImageView.contentTintColor = .systemRed
     cancelImageView.isHidden = true
 
     // Configure delete button
-    deleteImageView.image = NSImage(systemSymbolName: "trash", accessibilityDescription: nil)
+    deleteImageView.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: nil)
     deleteImageView.contentTintColor = .tertiaryLabelColor
-    deleteImageView.symbolConfiguration = .init(
-      pointSize: Layout.metadataIconSize, weight: .regular)
+    deleteImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
     deleteImageView.isHidden = true
 
     // Spacer expands so trailing visuals sit flush right.
@@ -123,11 +126,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       rightStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
       rightStack.firstBaselineAnchor.constraint(equalTo: modelNameLabel.firstBaselineAnchor),
 
-      // Position delete button at the bottom right, aligned with line 2
+      // Position delete button at the top right, aligned with line 1
       deleteImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-      deleteImageView.centerYAnchor.constraint(equalTo: metadataLabel.centerYAnchor),
-      deleteImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.metadataIconSize),
-      deleteImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.metadataIconSize),
+      deleteImageView.centerYAnchor.constraint(equalTo: modelNameLabel.centerYAnchor),
+      deleteImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
+      deleteImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
     ])
   }
 
