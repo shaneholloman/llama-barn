@@ -19,7 +19,7 @@ extension Catalog {
       self.series = series
       self.serverArgs = serverArgs
       self.overheadMultiplier = overheadMultiplier
-      self.sizes = sizes
+      self.sizes = sizes.sorted { $0.parameterCount < $1.parameterCount }
     }
 
     var iconName: String {
