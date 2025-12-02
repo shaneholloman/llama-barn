@@ -5,7 +5,7 @@ struct FooterButtonStyle: ButtonStyle {
     configuration.label
       .font(Font(Typography.secondary))
       // fixes: inverse color on mouse down
-      .foregroundColor(Color(nsColor: .secondaryLabelColor))
+      .foregroundColor(Color(nsColor: .tertiaryLabelColor))
       .padding(.horizontal, 5)
       .padding(.vertical, 2)
       .background(
@@ -29,13 +29,13 @@ struct FooterView: View {
     HStack(spacing: 0) {
       Button(action: onCheckForUpdates) {
         Text(appVersionText)
-          .font(Font(Typography.primary))
-          .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+          .font(Font(Typography.secondary))
+          .foregroundColor(Color(nsColor: .secondaryLabelColor))
       }
       .buttonStyle(.plain)
 
       Text(" · llama.cpp \(AppInfo.llamaCppVersion)")
-        .font(Font(Typography.primary))
+        .font(Font(Typography.secondary))
         .foregroundColor(Color(nsColor: .tertiaryLabelColor))
 
       Spacer()
@@ -54,7 +54,7 @@ struct FooterView: View {
 
   private var appVersionText: String {
     #if DEBUG
-      return "🔨"
+      return "dev"
     #else
       return AppInfo.shortVersion == "0.0.0"
         ? "build \(AppInfo.buildNumber)"
