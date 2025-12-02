@@ -343,16 +343,19 @@ final class MenuController: NSObject, NSMenuDelegate {
         Catalog.isModelCompatible($0) && (showQuantized || $0.isFullPrecision)
       }
 
-      if validModels.isEmpty && !UserSettings.showIncompatibleFamilies {
+      // Only show family if there are models available to install
+      let availableModels = validModels.filter {
+        !modelManager.isInstalled($0) && !modelManager.isDownloading($0)
+      }
+
+      if availableModels.isEmpty {
         continue
       }
 
-      // Collect unique sizes for header from valid models (excluding installed)
+      // Collect unique sizes for header from available models
       var sizes: [String] = []
       var seenSizes: Set<String> = []
-      for model in validModels {
-        if modelManager.isInstalled(model) || modelManager.isDownloading(model) { continue }
-
+      for model in availableModels {
         if !seenSizes.contains(model.sizeLabel) {
           seenSizes.insert(model.sizeLabel)
           sizes.append(model.sizeLabel)
@@ -372,20 +375,12 @@ final class MenuController: NSObject, NSMenuDelegate {
       items.append(headerItem)
 
       if !collapsedFamilies.contains(family.name) {
-        if validModels.isEmpty {
-          let view = IncompatibleFamilyMessageView()
-          let item = NSMenuItem.viewItem(with: view)
-          item.isEnabled = false
-          items.append(item)
-        } else {
-          for model in validModels
-          where !modelManager.isInstalled(model) && !modelManager.isDownloading(model) {
-            let view = CatalogModelItemView(model: model, modelManager: modelManager) {
-              [weak self] in
-              self?.didChangeDownloadStatus(for: model)
-            }
-            items.append(NSMenuItem.viewItem(with: view))
+        for model in availableModels {
+          let view = CatalogModelItemView(model: model, modelManager: modelManager) {
+            [weak self] in
+            self?.didChangeDownloadStatus(for: model)
           }
+          items.append(NSMenuItem.viewItem(with: view))
         }
       }
     }

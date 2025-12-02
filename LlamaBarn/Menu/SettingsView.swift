@@ -4,7 +4,6 @@ import SwiftUI
 struct SettingsView: View {
   @State private var launchAtLogin = LaunchAtLogin.isEnabled
   @State private var showQuantizedModels = UserSettings.showQuantizedModels
-  @State private var showIncompatibleFamilies = UserSettings.showIncompatibleFamilies
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
@@ -45,22 +44,6 @@ struct SettingsView: View {
           .toggleStyle(SwitchToggleStyle())
           .onChange(of: showQuantizedModels) { _, newValue in
             UserSettings.showQuantizedModels = newValue
-          }
-      }
-      HStack {
-        VStack(alignment: .leading, spacing: 3) {
-          Text("Show incompatible families")
-          Text("Shows families that don't have any models compatible with your device.")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        Spacer()
-        Toggle("", isOn: $showIncompatibleFamilies)
-          .labelsHidden()
-          .toggleStyle(SwitchToggleStyle())
-          .onChange(of: showIncompatibleFamilies) { _, newValue in
-            UserSettings.showIncompatibleFamilies = newValue
           }
       }
     }
