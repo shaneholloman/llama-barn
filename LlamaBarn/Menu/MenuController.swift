@@ -12,10 +12,10 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   // Section State
   private var isInstalledCollapsed = false
+  private var isSettingsOpen = false
   private var collapsedFamilies: Set<String> = []
   private var knownFamilies: Set<String> = []
 
-  private let settingsWindowController = SettingsWindowController()
   private weak var currentlyHighlightedView: ItemView?
   private var welcomePopover: WelcomePopover?
   private var modifierTimer: Timer?
@@ -138,6 +138,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     addInstalledSection(to: menu)
     addCatalogSection(to: menu)
     addFooter(to: menu)
+    addSettingsSection(to: menu)
   }
 
   // MARK: - Live updates without closing submenus
@@ -202,14 +203,6 @@ final class MenuController: NSObject, NSMenuDelegate {
       }
     }
 
-    NotificationCenter.default.addObserver(
-      forName: .LBShowSettings, object: nil, queue: .main
-    ) { [weak self] _ in
-      MainActor.assumeIsolated {
-        self?.toggleSettings()
-      }
-    }
-
     refresh()
   }
 
@@ -255,10 +248,6 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   @objc private func checkForUpdates() {
     NotificationCenter.default.post(name: .LBCheckForUpdates, object: nil)
-  }
-
-  @objc private func toggleSettings() {
-    settingsWindowController.show()
   }
 
   @objc private func quitApp() {
@@ -409,5 +398,31 @@ final class MenuController: NSObject, NSMenuDelegate {
   private func makeSectionHeaderItem(_ title: String) -> NSMenuItem {
     let view = SectionHeaderView(title: title)
     return NSMenuItem.viewItem(with: view)
+  }
+
+  // MARK: - Settings Section
+
+  private func addSettingsSection(to menu: NSMenu) {
+    guard isSettingsOpen else { return }
+
+    menu.addItem(.separator())
+
+    // Launch at Login
+    let launchAtLoginItem = NSMenuItem.viewItem(
+      with: SettingsItemView(
+        title: "Launch at Login",
+        getValue: { LaunchAtLogin.isEnabled },
+        onToggle: { newValue in
+          _ = LaunchAtLogin.setEnabled(newValue)
+        }
+      ))
+    menu.addItem(launchAtLoginItem)
+  }
+
+  private func toggleSettings() {
+    isSettingsOpen.toggle()
+    if let menu = statusItem.menu {
+      rebuildMenu(menu)
+    }
   }
 }

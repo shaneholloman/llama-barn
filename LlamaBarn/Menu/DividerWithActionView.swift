@@ -10,6 +10,7 @@ final class DividerWithActionView: NSView {
     super.init(frame: .zero)
     translatesAutoresizingMaskIntoConstraints = false
     setup()
+    refresh()
   }
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -30,6 +31,20 @@ final class DividerWithActionView: NSView {
     button.toolTip = "Show quantized models"
     button.target = self
     button.action = #selector(buttonClicked)
+
+    // Use a system symbol that represents "compressed" or "options"
+    // "arrow.up.left.and.arrow.down.right" is compress
+    // "square.stack.3d.up" is models
+    // Let's use a filter-like icon or just a generic one.
+    // Given the context, maybe it was a custom icon or a system one.
+    // I'll use 'line.3.horizontal.decrease' (filter) as it filters/unfilters models.
+    // Or 'square.stack.3d.down.right'
+    let image = NSImage(
+      systemSymbolName: "square.stack.3d.down.right",
+      accessibilityDescription: "Show quantized models")
+    button.image = image
+    button.image?.isTemplate = true
+
     addSubview(button)
 
     NSLayoutConstraint.activate([
@@ -47,67 +62,27 @@ final class DividerWithActionView: NSView {
       line.trailingAnchor.constraint(equalTo: button.leadingAnchor, constant: -8),
       line.centerYAnchor.constraint(equalTo: centerYAnchor),
     ])
-
-    updateButtonState()
   }
 
   @objc private func buttonClicked() {
     onToggle()
-    updateButtonState()
+    refresh()
   }
 
-  private func updateButtonState() {
+  func refresh() {
     button.state = UserSettings.showQuantizedModels ? .on : .off
+    // Update tint color based on state if needed
+    button.contentTintColor = button.state == .on ? .controlAccentColor : .secondaryLabelColor
+  }
+}
 
-    let color =
-      UserSettings.showQuantizedModels ? Typography.primaryColor : Typography.secondaryColor
-    button.attributedTitle = NSAttributedString(
-      string: "Q",
-      attributes: [
-        .font: Typography.secondary,
-        .foregroundColor: color,
-      ]
-    )
+private class HoverButton: NSButton {
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    isBordered = false
+    title = ""
+    imagePosition = .imageOnly
   }
 
-  private class HoverButton: NSButton {
-    private var trackingArea: NSTrackingArea?
-    var isHovered = false { didSet { needsDisplay = true } }
-
-    override init(frame frameRect: NSRect) {
-      super.init(frame: frameRect)
-      isBordered = false
-      wantsLayer = true
-      focusRingType = .none
-      (cell as? NSButtonCell)?.highlightsBy = .contentsCellMask
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-    override func updateTrackingAreas() {
-      super.updateTrackingAreas()
-      if let trackingArea = trackingArea { removeTrackingArea(trackingArea) }
-      trackingArea = NSTrackingArea(
-        rect: bounds,
-        options: [.mouseEnteredAndExited, .activeAlways],
-        owner: self,
-        userInfo: nil
-      )
-      addTrackingArea(trackingArea!)
-    }
-
-    override func mouseEntered(with event: NSEvent) { isHovered = true }
-    override func mouseExited(with event: NSEvent) { isHovered = false }
-
-    override func draw(_ dirtyRect: NSRect) {
-      if isHovered || state == .on {
-        let color: NSColor =
-          state == .on ? .tertiaryLabelColor.withAlphaComponent(0.25) : .quaternaryLabelColor
-        color.setFill()
-        let path = NSBezierPath(roundedRect: bounds, xRadius: 3, yRadius: 3)
-        path.fill()
-      }
-      super.draw(dirtyRect)
-    }
-  }
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
