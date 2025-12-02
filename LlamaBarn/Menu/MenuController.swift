@@ -392,8 +392,12 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     guard !items.isEmpty else { return }
 
-    let separator = NSMenuItem.separator()
-    menu.addItem(separator)
+    let dividerView = DividerWithActionView {
+      UserSettings.showQuantizedModels.toggle()
+    }
+    let dividerItem = NSMenuItem.viewItem(with: dividerView)
+    dividerItem.isEnabled = true
+    menu.addItem(dividerItem)
 
     items.forEach { menu.addItem($0) }
   }
