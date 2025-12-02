@@ -1,11 +1,10 @@
 import AppKit
 import Foundation
 
-/// Header row showing app name and server status.
+/// Header row showing server status.
 final class HeaderView: NSView {
 
   private unowned let server: LlamaServer
-  private let appNameLabel = Typography.makePrimaryLabel()
   private let serverStatusLabel = Typography.makeSecondaryLabel()
   private let backgroundView = NSView()
 
@@ -25,24 +24,17 @@ final class HeaderView: NSView {
     wantsLayer = true
     backgroundView.wantsLayer = true
 
-    appNameLabel.stringValue = "LlamaBarn"
-
     serverStatusLabel.allowsEditingTextAttributes = true
     serverStatusLabel.isSelectable = true
 
-    let stack = NSStackView(views: [appNameLabel, serverStatusLabel])
-    stack.orientation = .vertical
-    stack.alignment = .leading
-    stack.spacing = 2
-
     addSubview(backgroundView)
-    backgroundView.addSubview(stack)
+    backgroundView.addSubview(serverStatusLabel)
 
     backgroundView.pinToSuperview(
       leading: Layout.outerHorizontalPadding,
       trailing: Layout.outerHorizontalPadding
     )
-    stack.pinToSuperview(
+    serverStatusLabel.pinToSuperview(
       top: 6,
       leading: Layout.innerHorizontalPadding,
       trailing: Layout.innerHorizontalPadding,
@@ -56,8 +48,7 @@ final class HeaderView: NSView {
       let host =
         UserSettings.exposeToNetwork ? (LlamaServer.getLocalIpAddress() ?? "0.0.0.0") : "localhost"
       let linkText = "\(host):\(LlamaServer.defaultPort)"
-      let modelName = server.activeModelName ?? "model"
-      let full = "\(modelName) is running on \(linkText)"
+      let full = "Running on \(linkText)"
       let url = URL(string: "http://\(linkText)/")!
 
       let paragraphStyle = NSMutableParagraphStyle()
@@ -67,11 +58,6 @@ final class HeaderView: NSView {
       baseAttributes[.paragraphStyle] = paragraphStyle
 
       let attributed = NSMutableAttributedString(string: full, attributes: baseAttributes)
-
-      if let modelRange = full.range(of: modelName) {
-        attributed.addAttribute(
-          .foregroundColor, value: NSColor.llamaGreen, range: NSRange(modelRange, in: full))
-      }
 
       if let linkRange = full.range(of: linkText) {
         attributed.addAttributes(
