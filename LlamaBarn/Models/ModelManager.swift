@@ -14,7 +14,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   static let shared = ModelManager()
 
   var downloadedModels: [CatalogEntry] = []
-  private var downloadedModelIds: Set<String> = []
 
   // Track multi-file downloads per model id
   struct ActiveDownload {
@@ -133,7 +132,7 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
   /// Gets the current status of a model.
   func status(for model: CatalogEntry) -> ModelStatus {
-    if downloadedModelIds.contains(model.id) {
+    if downloadedModels.contains(where: { $0.id == model.id }) {
       return .installed
     }
     if let download = activeDownloads[model.id] {
@@ -165,7 +164,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
         // Only update state after successful deletion
         await MainActor.run {
           guard let self = self else { return }
-          self.downloadedModelIds.remove(model.id)
           self.downloadedModels.removeAll { $0.id == model.id }
           NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
         }
@@ -187,7 +185,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
         await MainActor.run {
           guard let self = self else { return }
           self.downloadedModels = []
-          self.downloadedModelIds = []
           NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
         }
         return
@@ -209,7 +206,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
       await MainActor.run {
         guard let self = self else { return }
         self.downloadedModels = downloaded
-        self.downloadedModelIds = Set(downloaded.map { $0.id })
         NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
       }
     }

@@ -46,7 +46,6 @@ class LlamaServer {
     didSet { NotificationCenter.default.post(name: .LBServerStateDidChange, object: self) }
   }
   var activeModelPath: String?
-  var activeModelName: String?
   private(set) var activeCtxWindow: Int?
   var memoryUsageMb: Double = 0 {
     didSet { NotificationCenter.default.post(name: .LBServerMemoryDidChange, object: self) }
@@ -127,7 +126,6 @@ class LlamaServer {
     state = .loading
 
     activeModelPath = modelPath
-    activeModelName = modelName
     activeCtxWindow = appliedCtxWindow
 
     let llamaServerPath = libFolderPath + "/llama-server"
@@ -208,7 +206,6 @@ class LlamaServer {
       logger.error("Failed to launch process: \(error)")
       self.state = .error(.launchFailed(errorMessage))
       self.activeModelPath = nil
-      self.activeModelName = nil
       self.activeCtxWindow = nil
       return
     }
@@ -222,7 +219,6 @@ class LlamaServer {
     state = .idle
 
     activeModelPath = nil
-    activeModelName = nil
     activeCtxWindow = nil
 
     cleanUpResources()
