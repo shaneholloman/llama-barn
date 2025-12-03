@@ -417,6 +417,17 @@ final class MenuController: NSObject, NSMenuDelegate {
         }
       ))
     menu.addItem(launchAtLoginItem)
+
+    // Show Quantized Models
+    // let showQuantizedItem = NSMenuItem.viewItem(
+    //   with: SettingsItemView(
+    //     title: "Show Quantized Models",
+    //     getValue: { UserSettings.showQuantizedModels },
+    //     onToggle: { newValue in
+    //       UserSettings.showQuantizedModels = newValue
+    //     }
+    //   ))
+    // menu.addItem(showQuantizedItem)
   }
 
   private func toggleSettings() {
