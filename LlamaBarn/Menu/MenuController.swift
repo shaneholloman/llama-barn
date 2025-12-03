@@ -79,6 +79,7 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     // Reset section collapse state
     isInstalledCollapsed = false
+    isSettingsOpen = false
     collapsedFamilies.removeAll()
     knownFamilies.removeAll()
   }
