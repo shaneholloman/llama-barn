@@ -1,5 +1,59 @@
 import AppKit
 
+// MARK: - Colors
+
+extension NSColor {
+  /// Green for status indicators and active icon containers.
+  static let llamaGreen = NSColor(name: nil) { appearance in
+    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+      ? NSColor(srgbRed: 0.40, green: 0.84, blue: 0.47, alpha: 1.0)  // #65D679
+      : NSColor(srgbRed: 0.12, green: 0.50, blue: 0.23, alpha: 1.0)  // #1F7F3A
+  }
+
+  /// Subtle background for hover states and inactive icon containers.
+  static let lbSubtleBackground = NSColor(name: nil) { appearance in
+    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+      ? NSColor.white.withAlphaComponent(0.11)
+      : NSColor.black.withAlphaComponent(0.06)
+  }
+
+  /// Border color for CALayers that don't support vibrancy.
+  ///
+  /// **Why not use `.separatorColor`?**
+  /// System colors like `.separatorColor` rely on "Vibrancy" (blending with the blurred window background)
+  /// to be visible. When converted to a `CGColor` for a `CALayer` border, this vibrancy effect is lost,
+  /// leaving only the raw color value which is often too transparent (e.g., 10% opacity) to be seen.
+  ///
+  /// This color provides a "flat" opaque alternative that mimics the visual weight of a separator
+  /// without relying on vibrancy effects.
+  static let lbBorder = NSColor(name: nil) { appearance in
+    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+      ? NSColor.white.withAlphaComponent(0.25)
+      : NSColor.black.withAlphaComponent(0.15)
+  }
+}
+
+// Helper for using dynamic NSColors with CALayer (which requires CGColor).
+extension CALayer {
+  func setBackgroundColor(_ color: NSColor, in view: NSView) {
+    var resolved: CGColor = NSColor.clear.cgColor
+    view.effectiveAppearance.performAsCurrentDrawingAppearance {
+      resolved = color.cgColor
+    }
+    backgroundColor = resolved
+  }
+
+  func setBorderColor(_ color: NSColor, in view: NSView) {
+    var resolved: CGColor = NSColor.clear.cgColor
+    view.effectiveAppearance.performAsCurrentDrawingAppearance {
+      resolved = color.cgColor
+    }
+    borderColor = resolved
+  }
+}
+
+// MARK: - Typography
+
 /// Shared type ramp and color system for the app.
 enum Typography {
   // MARK: - Fonts

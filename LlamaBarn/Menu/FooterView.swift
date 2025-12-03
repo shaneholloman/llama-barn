@@ -27,10 +27,12 @@ final class FooterView: NSView {
   private func setup() {
     // Version Button
     let versionButton = NSButton(
-      title: appVersionText, target: self, action: #selector(checkForUpdatesClicked))
+      title: "", target: self, action: #selector(checkForUpdatesClicked))
+    versionButton.attributedTitle = NSAttributedString(
+      string: appVersionText,
+      attributes: Typography.makeSecondaryAttributes(color: .secondaryLabelColor)
+    )
     versionButton.isBordered = false
-    versionButton.font = Typography.secondary
-    versionButton.contentTintColor = .secondaryLabelColor
     versionButton.translatesAutoresizingMaskIntoConstraints = false
 
     // Llama Version Label
@@ -91,17 +93,20 @@ final class FooterView: NSView {
 private class FooterButton: NSButton {
   init(title: String, target: AnyObject?, action: Selector) {
     super.init(frame: .zero)
-    self.title = title
+    self.attributedTitle = NSAttributedString(
+      string: title,
+      attributes: Typography.makeSecondaryAttributes(color: .tertiaryLabelColor)
+    )
     self.target = target
     self.action = action
-    self.font = Typography.secondary
     self.bezelStyle = .inline
-    self.contentTintColor = .tertiaryLabelColor
     self.isBordered = false  // We draw our own border
     self.wantsLayer = true
   }
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  override var wantsUpdateLayer: Bool { true }
 
   override var intrinsicContentSize: NSSize {
     let size = super.intrinsicContentSize
@@ -111,9 +116,17 @@ private class FooterButton: NSButton {
   override func updateLayer() {
     layer?.cornerRadius = 5
     layer?.borderWidth = 1
-    layer?.borderColor = NSColor.separatorColor.cgColor
-    layer?.backgroundColor =
-      isHighlighted ? NSColor.lbSubtleBackground.cgColor : NSColor.clear.cgColor
+    // Use .lbBorder instead of .separatorColor because CALayers don't support vibrancy.
+    // See Theme.swift for details.
+    layer?.setBorderColor(.lbBorder, in: self)
+
+    let bgColor: NSColor = isHighlighted ? .lbSubtleBackground : .clear
+    layer?.setBackgroundColor(bgColor, in: self)
+  }
+
+  override func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    needsDisplay = true
   }
 
   override var isHighlighted: Bool {
