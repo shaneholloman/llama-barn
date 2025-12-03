@@ -18,8 +18,6 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   private weak var currentlyHighlightedView: ItemView?
   private var welcomePopover: WelcomePopover?
-  private var modifierTimer: Timer?
-  private var lastModifierFlags: NSEvent.ModifierFlags?
 
   init(modelManager: ModelManager? = nil, server: LlamaServer? = nil) {
     self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -68,49 +66,18 @@ final class MenuController: NSObject, NSMenuDelegate {
   func menuWillOpen(_ menu: NSMenu) {
     guard menu === statusItem.menu else { return }
     modelManager.refreshDownloadedModels()
-    startModifierTimer()
   }
 
   func menuDidClose(_ menu: NSMenu) {
     guard menu === statusItem.menu else { return }
     currentlyHighlightedView?.setHighlight(false)
     currentlyHighlightedView = nil
-    stopModifierTimer()
 
     // Reset section collapse state
     isInstalledCollapsed = false
     isSettingsOpen = false
     collapsedFamilies.removeAll()
     knownFamilies.removeAll()
-  }
-
-  private func startModifierTimer() {
-    stopModifierTimer()
-    lastModifierFlags = NSEvent.modifierFlags
-    let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
-      self?.checkModifiers()
-    }
-    RunLoop.current.add(timer, forMode: .eventTracking)
-    RunLoop.current.add(timer, forMode: .default)
-    self.modifierTimer = timer
-  }
-
-  private func stopModifierTimer() {
-    modifierTimer?.invalidate()
-    modifierTimer = nil
-    lastModifierFlags = nil
-  }
-
-  private func checkModifiers() {
-    let currentFlags = NSEvent.modifierFlags
-    // We only care about the Option key for now
-    let wasOption = lastModifierFlags?.contains(.option) ?? false
-    let isOption = currentFlags.contains(.option)
-
-    if wasOption != isOption {
-      lastModifierFlags = currentFlags
-      refresh()
-    }
   }
 
   func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
@@ -151,13 +118,6 @@ final class MenuController: NSObject, NSMenuDelegate {
       rebuildMenu(menu)
     }
     refresh()
-  }
-
-  /// Called when family collapse/expand is toggled.
-  /// Rebuilds only the catalog section to show/hide models while preserving collapse state.
-  private func rebuildCatalogSection() {
-    guard let menu = statusItem.menu else { return }
-    rebuildMenu(menu)
   }
 
   /// Helper to observe a notification and call refresh on the main actor
@@ -393,7 +353,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     } else {
       collapsedFamilies.insert(family)
     }
-    rebuildCatalogSection()
+    if let menu = statusItem.menu {
+      rebuildMenu(menu)
+    }
   }
 
   private func makeSectionHeaderItem(_ title: String) -> NSMenuItem {
