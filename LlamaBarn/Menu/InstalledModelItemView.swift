@@ -27,6 +27,8 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   // Hover handling is provided by MenuItemView
   private var rowClickRecognizer: NSClickGestureRecognizer?
   private var deleteClickRecognizer: NSClickGestureRecognizer?
+  private var rightClickRecognizer: NSClickGestureRecognizer?
+  private var showingDeleteButton = false
 
   init(
     model: CatalogEntry, server: LlamaServer, modelManager: ModelManager,
@@ -61,7 +63,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     cancelImageView.isHidden = true
 
     // Configure delete button
-    deleteImageView.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: nil)
+    deleteImageView.image = NSImage(systemSymbolName: "trash", accessibilityDescription: nil)
     deleteImageView.contentTintColor = .tertiaryLabelColor
     deleteImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
     deleteImageView.isHidden = true
@@ -107,7 +109,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     // Add rightStack separately to align with line 1
     contentView.addSubview(rightStack)
 
-    // Add delete button separately so we can position it at the bottom
+    // Add delete button separately so we can position it centered vertically
     deleteImageView.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(deleteImageView)
 
@@ -126,9 +128,9 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       rightStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
       rightStack.firstBaselineAnchor.constraint(equalTo: modelNameLabel.firstBaselineAnchor),
 
-      // Position delete button at the top right, aligned with line 1
+      // Position delete button at the right, centered vertically
       deleteImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-      deleteImageView.centerYAnchor.constraint(equalTo: modelNameLabel.centerYAnchor),
+      deleteImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       deleteImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
       deleteImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
     ])
@@ -148,11 +150,24 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       deleteImageView.addGestureRecognizer(click)
       deleteClickRecognizer = click
     }
+    if rightClickRecognizer == nil {
+      let rightClick = NSClickGestureRecognizer(target: self, action: #selector(didRightClick))
+      rightClick.buttonMask = 0x2  // Right mouse button
+      addGestureRecognizer(rightClick)
+      rightClickRecognizer = rightClick
+    }
   }
 
   @objc private func didClickRow() { toggle() }
 
   @objc private func didClickDelete() { performDelete() }
+
+  @objc private func didRightClick() {
+    // Only toggle delete button for installed models
+    guard modelManager.isInstalled(model) else { return }
+    showingDeleteButton.toggle()
+    refresh()
+  }
 
   // Prevent row toggle when clicking the delete button.
   func gestureRecognizer(
@@ -221,8 +236,12 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       iconView.inactiveTintColor = line2Color
     }
 
-    // Delete button only for installed models on hover
-    deleteImageView.isHidden = !modelManager.isInstalled(model) || !isHighlighted
+    // Delete button only for installed models on right-click
+    // Reset showingDeleteButton if model is no longer installed
+    if !modelManager.isInstalled(model) {
+      showingDeleteButton = false
+    }
+    deleteImageView.isHidden = !showingDeleteButton
 
     // Update icon state
     iconView.setLoading(isLoading)
@@ -232,7 +251,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   }
 
   override func highlightDidChange(_ highlighted: Bool) {
-    deleteImageView.isHidden = !modelManager.isInstalled(model) || !highlighted
+    // Reset delete button when mouse exits
+    if !highlighted && showingDeleteButton {
+      showingDeleteButton = false
+      refresh()
+    }
   }
 
   override func viewDidChangeEffectiveAppearance() {
@@ -243,6 +266,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
   @objc private func performDelete() {
     guard modelManager.isInstalled(model) else { return }
+    showingDeleteButton = false
     modelManager.deleteDownloadedModel(model)
     membershipChanged(model)
   }
