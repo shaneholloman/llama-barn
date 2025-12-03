@@ -13,7 +13,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   private var isInstalledCollapsed = false
   private var isSettingsOpen = false
   private var collapsedFamilies: Set<String> = []
-  private var knownFamilies: Set<String> = []
+  private var hasInitializedCollapseState = false
 
   private weak var currentlyHighlightedView: ItemView?
   private var welcomePopover: WelcomePopover?
@@ -76,7 +76,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     isInstalledCollapsed = false
     isSettingsOpen = false
     collapsedFamilies.removeAll()
-    knownFamilies.removeAll()
+    hasInitializedCollapseState = false
   }
 
   func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
@@ -264,21 +264,13 @@ final class MenuController: NSObject, NSMenuDelegate {
   // MARK: - Catalog Section
 
   private func addCatalogSection(to menu: NSMenu) {
-    // Calculate visible families first
-    let visibleFamilies = Set(Catalog.families.map { $0.name })
-
     // Initialize families as collapsed when menu first opens.
     // On subsequent rebuilds during the same session (e.g., toggling settings),
-    // preserve the collapse state and collapse any newly appearing families.
-    if collapsedFamilies.isEmpty && knownFamilies.isEmpty {
-      collapsedFamilies = visibleFamilies
-    } else {
-      // Add newly appearing families to collapsed state
-      let newFamilies = visibleFamilies.subtracting(knownFamilies)
-      collapsedFamilies.formUnion(newFamilies)
-      collapsedFamilies.formIntersection(visibleFamilies)  // Remove families no longer in catalog
+    // preserve the collapse state.
+    if !hasInitializedCollapseState {
+      collapsedFamilies = Set(Catalog.families.map { $0.name })
+      hasInitializedCollapseState = true
     }
-    knownFamilies = visibleFamilies
 
     var items: [NSMenuItem] = []
 

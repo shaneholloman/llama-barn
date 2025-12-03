@@ -2,7 +2,7 @@ import Foundation
 import os.log
 
 /// Essential errors that can occur during llama-server operations
-enum LlamaServerError: Error, LocalizedError {
+enum LlamaServerError: Error, LocalizedError, Equatable {
   case launchFailed(String)
   case healthCheckFailed
   case invalidPath(String)
@@ -40,17 +40,6 @@ class LlamaServer {
     case loading
     case running
     case error(LlamaServerError)
-
-    static func == (lhs: ServerState, rhs: ServerState) -> Bool {
-      switch (lhs, rhs) {
-      case (.idle, .idle), (.loading, .loading), (.running, .running):
-        return true
-      case (.error(let lhsError), .error(let rhsError)):
-        return lhsError.localizedDescription == rhsError.localizedDescription
-      default:
-        return false
-      }
-    }
   }
 
   var state: ServerState = .idle {
