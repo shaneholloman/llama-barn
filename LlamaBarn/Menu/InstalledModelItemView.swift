@@ -22,10 +22,12 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     return label
   }()
   private let cancelImageView = NSImageView()
+  private let maxContextImageView = NSImageView()
   private let deleteImageView = NSImageView()
 
   // Hover handling is provided by MenuItemView
   private var rowClickRecognizer: NSClickGestureRecognizer?
+  private var maxContextClickRecognizer: NSClickGestureRecognizer?
   private var deleteClickRecognizer: NSClickGestureRecognizer?
   private var rightClickRecognizer: NSClickGestureRecognizer?
   private var showingDeleteButton = false
@@ -62,8 +64,17 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     cancelImageView.contentTintColor = .systemRed
     cancelImageView.isHidden = true
 
+    // Configure max context button
+    maxContextImageView.image = NSImage(
+      systemSymbolName: "gauge.high", accessibilityDescription: nil)
+    maxContextImageView.toolTip = "Run at max ctx"
+    maxContextImageView.contentTintColor = .tertiaryLabelColor
+    maxContextImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
+    maxContextImageView.isHidden = true
+
     // Configure delete button
     deleteImageView.image = NSImage(systemSymbolName: "trash", accessibilityDescription: nil)
+    deleteImageView.toolTip = "Delete model"
     deleteImageView.contentTintColor = .tertiaryLabelColor
     deleteImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
     deleteImageView.isHidden = true
@@ -109,7 +120,10 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     // Add rightStack separately to align with line 1
     contentView.addSubview(rightStack)
 
-    // Add delete button separately so we can position it centered vertically
+    // Add action buttons separately so we can position them centered vertically
+    maxContextImageView.translatesAutoresizingMaskIntoConstraints = false
+    contentView.addSubview(maxContextImageView)
+
     deleteImageView.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(deleteImageView)
 
@@ -133,6 +147,13 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       deleteImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
       deleteImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
       deleteImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
+
+      // Position max context button to the left of delete button
+      maxContextImageView.trailingAnchor.constraint(
+        equalTo: deleteImageView.leadingAnchor, constant: -8),
+      maxContextImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+      maxContextImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
+      maxContextImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
     ])
   }
 
@@ -144,6 +165,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       click.delegate = self
       addGestureRecognizer(click)
       rowClickRecognizer = click
+    }
+    if maxContextClickRecognizer == nil {
+      let click = NSClickGestureRecognizer(target: self, action: #selector(didClickMaxContext))
+      maxContextImageView.addGestureRecognizer(click)
+      maxContextClickRecognizer = click
     }
     if deleteClickRecognizer == nil {
       let click = NSClickGestureRecognizer(target: self, action: #selector(didClickDelete))
@@ -160,6 +186,13 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
   @objc private func didClickRow() { toggle() }
 
+  @objc private func didClickMaxContext() {
+    guard modelManager.isInstalled(model) else { return }
+    showingDeleteButton = false
+    server.start(model: model, maximizeContext: true)
+    refresh()
+  }
+
   @objc private func didClickDelete() { performDelete() }
 
   @objc private func didRightClick() {
@@ -174,10 +207,17 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     _ gestureRecognizer: NSGestureRecognizer, shouldAttemptToRecognizeWith event: NSEvent
   ) -> Bool {
     let loc = event.locationInWindow
-    let localPoint = deleteImageView.convert(loc, from: nil)
-    if deleteImageView.bounds.contains(localPoint) && !deleteImageView.isHidden {
+
+    let deletePoint = deleteImageView.convert(loc, from: nil)
+    if deleteImageView.bounds.contains(deletePoint) && !deleteImageView.isHidden {
       return false
     }
+
+    let maxCtxPoint = maxContextImageView.convert(loc, from: nil)
+    if maxContextImageView.bounds.contains(maxCtxPoint) && !maxContextImageView.isHidden {
+      return false
+    }
+
     return true
   }
 
@@ -263,6 +303,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       showingDeleteButton = false
     }
     deleteImageView.isHidden = !showingDeleteButton
+    maxContextImageView.isHidden = !showingDeleteButton
 
     // Update icon state
     iconView.setLoading(isLoading)
@@ -283,6 +324,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     super.viewDidChangeEffectiveAppearance()
     cancelImageView.contentTintColor = .systemRed
     deleteImageView.contentTintColor = .tertiaryLabelColor
+    maxContextImageView.contentTintColor = .tertiaryLabelColor
   }
 
   @objc private func performDelete() {
