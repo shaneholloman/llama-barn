@@ -5,8 +5,12 @@ import Foundation
 final class HeaderView: NSView {
 
   private unowned let server: LlamaServer
-  private let serverStatusLabel = Typography.makeSecondaryLabel()
+  private let stackView = NSStackView()
+  private let statusLabel = Typography.makeSecondaryLabel()
+  private let linkButton = NSButton()
   private let backgroundView = NSView()
+
+  private var currentUrl: URL?
 
   init(server: LlamaServer) {
     self.server = server
@@ -18,28 +22,47 @@ final class HeaderView: NSView {
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-  override var intrinsicContentSize: NSSize { NSSize(width: Layout.menuWidth, height: 40) }
-
   private func setup() {
     wantsLayer = true
     backgroundView.wantsLayer = true
 
-    serverStatusLabel.allowsEditingTextAttributes = true
-    serverStatusLabel.isSelectable = true
+    widthAnchor.constraint(equalToConstant: Layout.menuWidth).isActive = true
 
     addSubview(backgroundView)
-    backgroundView.addSubview(serverStatusLabel)
+    backgroundView.addSubview(stackView)
 
     backgroundView.pinToSuperview(
       leading: Layout.outerHorizontalPadding,
       trailing: Layout.outerHorizontalPadding
     )
-    serverStatusLabel.pinToSuperview(
+
+    stackView.translatesAutoresizingMaskIntoConstraints = false
+    stackView.pinToSuperview(
       top: 6,
       leading: Layout.innerHorizontalPadding,
       trailing: Layout.innerHorizontalPadding,
       bottom: 6
     )
+
+    stackView.orientation = .horizontal
+    stackView.spacing = 0
+    stackView.alignment = .firstBaseline
+    stackView.distribution = .fill
+
+    // Link Button Configuration
+    linkButton.isBordered = false
+    linkButton.setButtonType(.momentaryChange)
+    linkButton.imagePosition = .noImage
+    linkButton.target = self
+    linkButton.action = #selector(openLink)
+
+    stackView.addArrangedSubview(statusLabel)
+    stackView.addArrangedSubview(linkButton)
+
+    // Spacer
+    let spacer = NSView()
+    spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+    stackView.addArrangedSubview(spacer)
   }
 
   func refresh() {
@@ -48,38 +71,38 @@ final class HeaderView: NSView {
       let host =
         UserSettings.exposeToNetwork ? (LlamaServer.getLocalIpAddress() ?? "0.0.0.0") : "localhost"
       let linkText = "\(host):\(LlamaServer.defaultPort)"
-      let full = "Running on \(linkText)"
       let url = URL(string: "http://\(linkText)/")!
 
-      let paragraphStyle = NSMutableParagraphStyle()
-      paragraphStyle.lineBreakMode = .byTruncatingTail
+      self.currentUrl = url
 
-      var baseAttributes = Typography.makeSecondaryAttributes(color: Typography.primaryColor)
-      baseAttributes[.paragraphStyle] = paragraphStyle
+      statusLabel.stringValue = "Running on "
+      statusLabel.textColor = Typography.secondaryColor
 
-      let attributed = NSMutableAttributedString(string: full, attributes: baseAttributes)
-
-      if let linkRange = full.range(of: linkText) {
-        attributed.addAttributes(
-          [
-            .link: url,
-            .foregroundColor: NSColor.linkColor,
-            .underlineStyle: NSUnderlineStyle.single.rawValue,
-          ],
-          range: NSRange(linkRange, in: full)
-        )
-      }
-      serverStatusLabel.attributedStringValue = attributed
-      serverStatusLabel.toolTip = "Open llama-server"
-    } else {
-      serverStatusLabel.attributedStringValue = NSAttributedString(
-        string: "Select a model to run",
-        attributes: Typography.secondaryAttributes
+      let attrTitle = NSAttributedString(
+        string: linkText,
+        attributes: [
+          .foregroundColor: NSColor.linkColor,
+          .font: Typography.secondary,
+          .underlineStyle: NSUnderlineStyle.single.rawValue,
+        ]
       )
-      serverStatusLabel.toolTip = nil
+      linkButton.attributedTitle = attrTitle
+      linkButton.isHidden = false
+    } else {
+      statusLabel.stringValue = "Select a model to run"
+      statusLabel.textColor = Typography.secondaryColor
+      linkButton.isHidden = true
+      linkButton.toolTip = nil
+      currentUrl = nil
     }
 
     needsDisplay = true
+  }
+
+  @objc private func openLink() {
+    if let url = currentUrl {
+      NSWorkspace.shared.open(url)
+    }
   }
 
 }

@@ -62,7 +62,6 @@ enum Typography {
   static let secondary = NSFont.systemFont(ofSize: 11, weight: .regular)
 
   // MARK: - Colors
-  static let primaryColor: NSColor = .controlTextColor
   static let secondaryColor: NSColor = .secondaryLabelColor
   static let tertiaryColor: NSColor = .tertiaryLabelColor
 
@@ -71,7 +70,7 @@ enum Typography {
   static func makePrimaryLabel(_ text: String = "") -> NSTextField {
     let label = NSTextField(labelWithString: text)
     label.font = primary
-    label.textColor = primaryColor
+    label.textColor = secondaryColor
     return label
   }
 
@@ -92,12 +91,6 @@ enum Typography {
   }
 
   // MARK: - Attributed String Helpers
-  /// Common attributes for primary text
-  static let primaryAttributes: [NSAttributedString.Key: Any] = [
-    .font: primary,
-    .foregroundColor: primaryColor,
-  ]
-
   /// Common attributes for secondary text (metadata)
   static let secondaryAttributes: [NSAttributedString.Key: Any] = [
     .font: secondary,
