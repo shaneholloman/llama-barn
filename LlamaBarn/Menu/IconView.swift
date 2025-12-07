@@ -12,10 +12,8 @@ final class IconView: NSView {
 
   var isActive: Bool = false { didSet { refresh() } }
   private var isLoading: Bool = false { didSet { refresh() } }
-  var activeTintColor: NSColor = .llamaGreen { didSet { refresh() } }
   var inactiveTintColor: NSColor = Typography.secondaryColor { didSet { refresh() } }
 
-  private let iconLayer = CALayer()
   var inactiveBackgroundColor: NSColor = .lbSubtleBackground { didSet { refresh() } }
 
   override init(frame frameRect: NSRect = .zero) {

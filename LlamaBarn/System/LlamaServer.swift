@@ -290,27 +290,6 @@ class LlamaServer {
     )
   }
 
-  /// Convenience method to start server using a CatalogEntry and a specific context window
-  func start(model: CatalogEntry, ctxWindow: Int) {
-    let desired = ctxWindow <= 0 ? model.ctxWindow : ctxWindow
-    guard let launch = makeLaunchConfiguration(for: model, requestedCtx: desired) else {
-      let reason =
-        Catalog.incompatibilitySummary(
-          model, ctxWindowTokens: Double(model.ctxWindow))
-        ?? "insufficient memory for requested context"
-      self.state = .error(.launchFailed(reason))
-      return
-    }
-
-    start(
-      modelName: model.displayName,
-      modelPath: model.modelFilePath,
-      appliedCtxWindow: launch.applied,
-      mmprojPath: model.mmprojFilePath,
-      extraArgs: launch.args
-    )
-  }
-
   private func makeLaunchConfiguration(
     for model: CatalogEntry,
     requestedCtx: Int?,

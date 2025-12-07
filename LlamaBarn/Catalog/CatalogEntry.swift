@@ -6,7 +6,6 @@ struct CatalogEntry: Identifiable, Codable {
   let family: String  // Model family name (e.g., "Qwen3", "Gemma 3n")
   let parameterCount: Int64  // Total model parameters (from HF API)
   let size: String  // Model size (e.g., "8B", "E4B")
-  let releaseDate: Date  // Model release date
   let ctxWindow: Int  // Maximum context window in tokens
   let fileSize: Int64  // File size in bytes for progress tracking and display
   /// Estimated KV-cache footprint for a 1k-token context, in bytes.
@@ -32,7 +31,6 @@ struct CatalogEntry: Identifiable, Codable {
     family: String,
     parameterCount: Int64,
     size: String,
-    releaseDate: Date,
     ctxWindow: Int,
     fileSize: Int64,
     ctxBytesPer1kTokens: Int,
@@ -49,7 +47,6 @@ struct CatalogEntry: Identifiable, Codable {
     self.family = family
     self.parameterCount = parameterCount
     self.size = size
-    self.releaseDate = releaseDate
     self.ctxWindow = ctxWindow
     self.fileSize = fileSize
     self.ctxBytesPer1kTokens = ctxBytesPer1kTokens

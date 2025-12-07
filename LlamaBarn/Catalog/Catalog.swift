@@ -311,7 +311,6 @@ enum Catalog {
       family: family.name,
       parameterCount: size.parameterCount,
       size: size.name,
-      releaseDate: size.releaseDate,
       ctxWindow: size.ctxWindow,
       fileSize: build.fileSize,
       ctxBytesPer1kTokens: size.ctxBytesPer1kTokens,

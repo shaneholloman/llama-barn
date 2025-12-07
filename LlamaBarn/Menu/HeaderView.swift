@@ -12,7 +12,6 @@ final class HeaderView: NSView {
   private let backgroundView = NSView()
 
   private var currentUrl: URL?
-  private var copyClickRecognizer: NSClickGestureRecognizer?
   private var showingCopyConfirmation = false
 
   init(server: LlamaServer) {
@@ -69,7 +68,6 @@ final class HeaderView: NSView {
 
     let copyClick = NSClickGestureRecognizer(target: self, action: #selector(copyUrl))
     copyImageView.addGestureRecognizer(copyClick)
-    copyClickRecognizer = copyClick
 
     stackView.addArrangedSubview(statusLabel)
     stackView.addArrangedSubview(linkButton)

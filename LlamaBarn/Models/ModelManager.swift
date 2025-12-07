@@ -258,7 +258,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
       handleDownloadFailure(
         modelId: modelId,
         model: model,
-        task: downloadTask,
         tempLocation: location,
         destinationURL: nil,
         reason: "HTTP \(httpResponse.statusCode)"
@@ -294,7 +293,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
           handleDownloadFailure(
             modelId: modelId,
             model: model,
-            task: downloadTask,
             tempLocation: nil,
             destinationURL: destinationURL,
             reason: "file size mismatch (expected \(model.fileSize), got \(fileSize))"
@@ -311,7 +309,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
           handleDownloadFailure(
             modelId: modelId,
             model: model,
-            task: downloadTask,
             tempLocation: nil,
             destinationURL: destinationURL,
             reason: "file too small (\(fileSize) B)"
@@ -354,7 +351,6 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   nonisolated private func handleDownloadFailure(
     modelId: String,
     model: CatalogEntry,
-    task: URLSessionDownloadTask,
     tempLocation: URL?,
     destinationURL: URL?,
     reason: String
