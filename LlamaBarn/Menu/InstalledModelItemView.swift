@@ -270,7 +270,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
     if isActive && !isLoading, let ctx = server.activeCtxWindow {
       let ctxString = Format.tokens(ctx)
-      let memMb = Catalog.runtimeMemoryUsageMb(for: model, ctxWindowTokens: Double(ctx))
+      let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(ctx))
       let memText = Format.memory(mb: memMb)
 
       metadata.append(Format.metadataSeparator())

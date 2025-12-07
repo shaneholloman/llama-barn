@@ -275,7 +275,7 @@ class LlamaServer {
         for: model, requestedCtx: nil, maximizeContext: maximizeContext)
     else {
       let reason =
-        Catalog.incompatibilitySummary(model)
+        model.incompatibilitySummary()
         ?? "insufficient memory for required context"
       self.state = .error(.launchFailed(reason))
       return
@@ -297,8 +297,8 @@ class LlamaServer {
   ) -> (applied: Int, args: [String])? {
     let sanitizedArgs = Self.removeContextArguments(from: model.serverArgs)
     guard
-      let usableCtx = Catalog.usableCtxWindow(
-        for: model, desiredTokens: requestedCtx, maximizeContext: maximizeContext)
+      let usableCtx = model.usableCtxWindow(
+        desiredTokens: requestedCtx, maximizeContext: maximizeContext)
     else {
       logger.error("No usable context window for model \(model.displayName, privacy: .public)")
       return nil

@@ -526,9 +526,9 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   }
 
   private func validateCompatibility(for model: CatalogEntry) throws {
-    guard Catalog.isModelCompatible(model) else {
+    guard model.isCompatible() else {
       let reason =
-        Catalog.incompatibilitySummary(model)
+        model.incompatibilitySummary()
         ?? "isn't compatible with this Mac's memory."
       throw DownloadError.notCompatible(reason: reason)
     }

@@ -89,9 +89,8 @@ struct CatalogEntry: Identifiable, Codable {
     let maxTokens =
       ctxWindow > 0
       ? Double(ctxWindow)
-      : Catalog.compatibilityCtxWindowTokens
-    return Catalog.runtimeMemoryUsageMb(
-      for: self, ctxWindowTokens: maxTokens)
+      : Self.compatibilityCtxWindowTokens
+    return runtimeMemoryUsageMb(ctxWindowTokens: maxTokens)
   }
 
   /// The local file system path where the model file will be stored
