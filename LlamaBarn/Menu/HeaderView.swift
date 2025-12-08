@@ -1,11 +1,12 @@
 import AppKit
 import Foundation
 
-/// Header row showing server status.
+/// Header row showing app name and server status.
 final class HeaderView: NSView {
 
   private unowned let server: LlamaServer
-  private let stackView = NSStackView()
+  private let appNameLabel = Typography.makePrimaryLabel()
+  private let statusStackView = NSStackView()
   private let statusLabel = Typography.makeSecondaryLabel()
   private let linkButton = NSButton()
   private let copyImageView = NSImageView()
@@ -30,26 +31,36 @@ final class HeaderView: NSView {
 
     widthAnchor.constraint(equalToConstant: Layout.menuWidth).isActive = true
 
+    appNameLabel.stringValue = "LlamaBarn"
+
     addSubview(backgroundView)
-    backgroundView.addSubview(stackView)
+
+    // Status stack for horizontal layout of status elements
+    statusStackView.translatesAutoresizingMaskIntoConstraints = false
+    statusStackView.orientation = .horizontal
+    statusStackView.spacing = 0
+    statusStackView.alignment = .firstBaseline
+    statusStackView.distribution = .fill
+
+    // Main stack for vertical layout of app name and status
+    let mainStack = NSStackView(views: [appNameLabel, statusStackView])
+    mainStack.orientation = .vertical
+    mainStack.alignment = .leading
+    mainStack.spacing = 2
+
+    backgroundView.addSubview(mainStack)
 
     backgroundView.pinToSuperview(
       leading: Layout.outerHorizontalPadding,
       trailing: Layout.outerHorizontalPadding
     )
 
-    stackView.translatesAutoresizingMaskIntoConstraints = false
-    stackView.pinToSuperview(
+    mainStack.pinToSuperview(
       top: 6,
       leading: Layout.innerHorizontalPadding,
       trailing: Layout.innerHorizontalPadding,
       bottom: 6
     )
-
-    stackView.orientation = .horizontal
-    stackView.spacing = 0
-    stackView.alignment = .firstBaseline
-    stackView.distribution = .fill
 
     // Link Button Configuration
     linkButton.isBordered = false
@@ -69,14 +80,14 @@ final class HeaderView: NSView {
     let copyClick = NSClickGestureRecognizer(target: self, action: #selector(copyUrl))
     copyImageView.addGestureRecognizer(copyClick)
 
-    stackView.addArrangedSubview(statusLabel)
-    stackView.addArrangedSubview(linkButton)
-    stackView.addArrangedSubview(copyImageView)
+    statusStackView.addArrangedSubview(statusLabel)
+    statusStackView.addArrangedSubview(linkButton)
+    statusStackView.addArrangedSubview(copyImageView)
 
     // Spacer
     let spacer = NSView()
     spacer.setContentHuggingPriority(.init(1), for: .horizontal)
-    stackView.addArrangedSubview(spacer)
+    statusStackView.addArrangedSubview(spacer)
   }
 
   func refresh() {
