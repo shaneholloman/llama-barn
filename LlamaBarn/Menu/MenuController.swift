@@ -317,10 +317,10 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     menu.addItem(.separator())
 
-    // Launch at Login
+    // Launch at login
     let launchAtLoginItem = NSMenuItem.viewItem(
       with: SettingsItemView(
-        title: "Launch at Login",
+        title: "Launch at login",
         getValue: { LaunchAtLogin.isEnabled },
         onToggle: { newValue in
           _ = LaunchAtLogin.setEnabled(newValue)
@@ -328,10 +328,10 @@ final class MenuController: NSObject, NSMenuDelegate {
       ))
     menu.addItem(launchAtLoginItem)
 
-    // Prefer Quantized Models
+    // Prefer quantized models
     let preferQuantizedItem = NSMenuItem.viewItem(
       with: SettingsItemView(
-        title: "Prefer Quantized Models",
+        title: "Prefer quantized models",
         subtitle: "Use compressed models to save memory and disk space",
         getValue: { UserSettings.preferQuantizedModels },
         onToggle: { newValue in
@@ -344,7 +344,7 @@ final class MenuController: NSObject, NSMenuDelegate {
       // Expose to Network
       let exposeToNetworkItem = NSMenuItem.viewItem(
         with: SettingsItemView(
-          title: "Expose to Network",
+          title: "Expose to network",
           subtitle: "Bind to 0.0.0.0 instead of localhost, dev-only",
           getValue: { UserSettings.exposeToNetwork },
           onToggle: { newValue in
