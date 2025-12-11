@@ -143,7 +143,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     // Model downloaded or deleted - rebuild both installed and catalog sections
     observeAndRebuild(.LBModelDownloadedListDidChange)
 
-    // User settings changed (e.g., prefer quantized models) - rebuild menu
+    // User settings changed - rebuild menu
     observeAndRebuild(.LBUserSettingsDidChange)
 
     refresh()
@@ -257,8 +257,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     var items: [NSMenuItem] = []
 
     for family in Catalog.families {
-      let preferQuantized = UserSettings.preferQuantizedModels
-      let validModels = family.selectableModels(preferQuantized: preferQuantized)
+      let validModels = family.selectableModels()
 
       // Only show family if there are models available to install
       let availableModels = validModels.filter {
@@ -331,18 +330,6 @@ final class MenuController: NSObject, NSMenuDelegate {
         }
       ))
     menu.addItem(launchAtLoginItem)
-
-    // Prefer quantized models
-    let preferQuantizedItem = NSMenuItem.viewItem(
-      with: SettingsItemView(
-        title: "Prefer quantized models",
-        subtitle: "Use compressed models to save memory and disk space",
-        getValue: { UserSettings.preferQuantizedModels },
-        onToggle: { newValue in
-          UserSettings.preferQuantizedModels = newValue
-        }
-      ))
-    menu.addItem(preferQuantizedItem)
 
     #if DEBUG
       // Expose to Network
