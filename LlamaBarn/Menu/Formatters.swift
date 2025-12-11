@@ -78,6 +78,21 @@ enum Format {
     let format = rounded.truncatingRemainder(dividingBy: 1) == 0 ? "%.0f" : "%.1f"
     return String(format: format + unit, rounded)
   }
+
+  /// Creates an attributed string containing an SF Symbol with the specified color.
+  private static func symbol(_ name: String, pointSize: CGFloat, color: NSColor)
+    -> NSAttributedString
+  {
+    let attachment = NSTextAttachment()
+    if let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) {
+      let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+      attachment.image = image.withSymbolConfiguration(config)
+    }
+    let result = NSMutableAttributedString(attachment: attachment)
+    result.addAttribute(
+      .foregroundColor, value: color, range: NSRange(location: 0, length: result.length))
+    return result
+  }
 }
 
 extension Format {
@@ -107,35 +122,19 @@ extension Format {
       NSAttributedString(string: model.totalSize, attributes: attributes))
 
     // Quantization
-    if let quantLabel = model.quantizationLabel {
+    if model.quantizationLabel != nil {
       result.append(Format.metadataSeparator())
       result.append(
-        NSAttributedString(string: quantLabel, attributes: attributes))
+        NSAttributedString(
+          string: model.quantizationLabel!,
+          attributes: attributes))
     }
 
     // Vision support
     if model.hasVisionSupport {
       result.append(Format.metadataSeparator())
-
-      // Add eyeglasses symbol
-      let attachment = NSTextAttachment()
-      if let image = NSImage(
-        systemSymbolName: "eyeglasses", accessibilityDescription: "Vision Support")
-      {
-        let config = NSImage.SymbolConfiguration(
-          pointSize: Theme.Fonts.secondary.pointSize, weight: .regular)
-        attachment.image = image.withSymbolConfiguration(config)
-      }
-
-      let visionIcon = NSMutableAttributedString(attachment: attachment)
-
-      // Set color for the symbol
-      visionIcon.addAttribute(
-        .foregroundColor,
-        value: color,
-        range: NSRange(location: 0, length: visionIcon.length))
-
-      result.append(visionIcon)
+      result.append(
+        Format.symbol("eyeglasses", pointSize: Theme.Fonts.secondary.pointSize, color: color))
     }
 
     return result
