@@ -83,7 +83,7 @@ final class FooterView: NSView {
       return "dev"
     #else
       return AppInfo.shortVersion == "0.0.0"
-        ? "build \(AppInfo.buildNumber)"
+        ? AppInfo.buildNumber
         : AppInfo.shortVersion
     #endif
   }
