@@ -2,7 +2,7 @@ import AppKit
 
 enum Theme {
   enum Colors {
-    static let textPrimary = NSColor.secondaryLabelColor
+    static let textPrimary = NSColor.labelColor
     static let textSecondary = NSColor.tertiaryLabelColor
 
     static let subtleBackground = NSColor.dynamic(
