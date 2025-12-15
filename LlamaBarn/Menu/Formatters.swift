@@ -107,7 +107,8 @@ extension Format {
 
   /// Formats model metadata text.
   /// Format: "2.53 GB" or "2.53 GB · 4.2 GB · Q4 · 👓"
-  /// (with memory usage shown when UserSettings.showMemUsageFor4kCtx is enabled)
+  /// (with memory usage shown when UserSettings.showMemUsageFor4kCtx is enabled,
+  /// using max context if UserSettings.runAtMaxContext is enabled)
   static func modelMetadata(for model: CatalogEntry, color: NSColor = Theme.Colors.textPrimary)
     -> NSAttributedString
   {
@@ -122,10 +123,13 @@ extension Format {
     result.append(
       NSAttributedString(string: model.totalSize, attributes: attributes))
 
-    // Memory usage for 4k context (optional)
+    // Memory usage (optional) - uses max context if setting is enabled, otherwise 4k
     if UserSettings.showMemUsageFor4kCtx {
       result.append(Format.metadataSeparator())
-      let memMb = model.runtimeMemoryUsageMb()
+      let memMb =
+        UserSettings.runAtMaxContext
+        ? model.estimatedRuntimeMemoryMbAtMaxContext
+        : model.runtimeMemoryUsageMb()
       result.append(
         NSAttributedString(string: Format.memory(mb: memMb) + " mem", attributes: attributes))
     }
