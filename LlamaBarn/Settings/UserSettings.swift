@@ -5,6 +5,7 @@ enum UserSettings {
   private enum Keys {
     static let hasSeenWelcome = "hasSeenWelcome"
     static let exposeToNetwork = "exposeToNetwork"
+    static let showMemUsageFor4kCtx = "showMemUsageFor4kCtx"
   }
 
   private static let defaults = UserDefaults.standard
@@ -29,6 +30,19 @@ enum UserSettings {
     set {
       guard defaults.bool(forKey: Keys.exposeToNetwork) != newValue else { return }
       defaults.set(newValue, forKey: Keys.exposeToNetwork)
+      NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
+    }
+  }
+
+  /// Whether to show estimated memory usage for 4k context next to size on disk.
+  /// Defaults to `false`.
+  static var showMemUsageFor4kCtx: Bool {
+    get {
+      defaults.bool(forKey: Keys.showMemUsageFor4kCtx)
+    }
+    set {
+      guard defaults.bool(forKey: Keys.showMemUsageFor4kCtx) != newValue else { return }
+      defaults.set(newValue, forKey: Keys.showMemUsageFor4kCtx)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
   }

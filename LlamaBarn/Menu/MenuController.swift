@@ -321,6 +321,18 @@ final class MenuController: NSObject, NSMenuDelegate {
       ))
     menu.addItem(launchAtLoginItem)
 
+    // Show mem usage for 4k ctx
+    let showMemUsageItem = NSMenuItem.viewItem(
+      with: SettingsItemView(
+        title: "Show estimated memory usage",
+        subtitle: "Option-hover to see estimate for running at max context",
+        getValue: { UserSettings.showMemUsageFor4kCtx },
+        onToggle: { newValue in
+          UserSettings.showMemUsageFor4kCtx = newValue
+        }
+      ))
+    menu.addItem(showMemUsageItem)
+
     #if DEBUG
       // Expose to Network
       let exposeToNetworkItem = NSMenuItem.viewItem(
