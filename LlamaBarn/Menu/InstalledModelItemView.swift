@@ -198,7 +198,8 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       if server.isActive(model: model) {
         server.stop()
       } else {
-        let maximizeContext = NSEvent.modifierFlags.contains(.option)
+        let maximizeContext =
+          NSEvent.modifierFlags.contains(.option) || UserSettings.runAtMaxContext
         server.start(model: model, maximizeContext: maximizeContext)
       }
     } else if modelManager.isDownloading(model) {

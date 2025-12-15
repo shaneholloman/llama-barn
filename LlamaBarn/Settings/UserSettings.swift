@@ -6,6 +6,7 @@ enum UserSettings {
     static let hasSeenWelcome = "hasSeenWelcome"
     static let exposeToNetwork = "exposeToNetwork"
     static let showMemUsageFor4kCtx = "showMemUsageFor4kCtx"
+    static let runAtMaxContext = "runAtMaxContext"
   }
 
   private static let defaults = UserDefaults.standard
@@ -43,6 +44,19 @@ enum UserSettings {
     set {
       guard defaults.bool(forKey: Keys.showMemUsageFor4kCtx) != newValue else { return }
       defaults.set(newValue, forKey: Keys.showMemUsageFor4kCtx)
+      NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
+    }
+  }
+
+  /// Whether to run models at their maximum supported context window instead of the default 4k.
+  /// Defaults to `false`.
+  static var runAtMaxContext: Bool {
+    get {
+      defaults.bool(forKey: Keys.runAtMaxContext)
+    }
+    set {
+      guard defaults.bool(forKey: Keys.runAtMaxContext) != newValue else { return }
+      defaults.set(newValue, forKey: Keys.runAtMaxContext)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
   }

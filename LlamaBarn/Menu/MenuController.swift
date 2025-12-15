@@ -333,6 +333,18 @@ final class MenuController: NSObject, NSMenuDelegate {
       ))
     menu.addItem(showMemUsageItem)
 
+    // Run at max context
+    let runAtMaxContextItem = NSMenuItem.viewItem(
+      with: SettingsItemView(
+        title: "Run at max context",
+        subtitle: "Use maximum supported context instead of default 4k",
+        getValue: { UserSettings.runAtMaxContext },
+        onToggle: { newValue in
+          UserSettings.runAtMaxContext = newValue
+        }
+      ))
+    menu.addItem(runAtMaxContextItem)
+
     #if DEBUG
       // Expose to Network
       let exposeToNetworkItem = NSMenuItem.viewItem(
