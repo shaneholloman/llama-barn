@@ -15,8 +15,13 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
   var downloadedModels: [CatalogEntry] = []
 
+  var downloadingModels: [CatalogEntry] {
+    activeDownloads.values.map { $0.model }
+  }
+
   // Track multi-file downloads per model id
   struct ActiveDownload {
+    let model: CatalogEntry
     var progress: Progress
     var tasks: [Int: URLSessionDownloadTask]
     var completedFilesBytes: Int64 = 0
@@ -107,6 +112,7 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
     let modelId = model.id
     let totalUnitCount = max(remainingBytesRequired(for: model), 1)
     var aggregate = ActiveDownload(
+      model: model,
       progress: Progress(totalUnitCount: totalUnitCount),
       tasks: [:],
       completedFilesBytes: 0

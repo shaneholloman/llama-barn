@@ -12,8 +12,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   // Section State
   private var isInstalledCollapsed = false
   private var isSettingsOpen = false
-  private var collapsedFamilies: Set<String> = []
-  private var hasInitializedCollapseState = false
+  private var collapsedFamilies: Set<String> = Set(Catalog.families.map { $0.name })
 
   private var welcomePopover: WelcomePopover?
 
@@ -76,8 +75,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     // Reset section collapse state
     isInstalledCollapsed = false
     isSettingsOpen = false
-    collapsedFamilies.removeAll()
-    hasInitializedCollapseState = false
+    collapsedFamilies = Set(Catalog.families.map { $0.name })
   }
 
   // MARK: - Menu Construction
@@ -217,8 +215,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   }
 
   private func installedModels() -> [CatalogEntry] {
-    let downloading = Catalog.allModels().filter { modelManager.isDownloading($0) }
-    return (modelManager.downloadedModels + downloading)
+    return (modelManager.downloadedModels + modelManager.downloadingModels)
       .sorted(by: CatalogEntry.displayOrder(_:_:))
   }
 
@@ -238,14 +235,6 @@ final class MenuController: NSObject, NSMenuDelegate {
   // MARK: - Catalog Section
 
   private func addCatalogSection(to menu: NSMenu) {
-    // Initialize families as collapsed when menu first opens.
-    // On subsequent rebuilds during the same session (e.g., toggling settings),
-    // preserve the collapse state.
-    if !hasInitializedCollapseState {
-      collapsedFamilies = Set(Catalog.families.map { $0.name })
-      hasInitializedCollapseState = true
-    }
-
     var items: [NSMenuItem] = []
 
     for family in Catalog.families {
@@ -253,7 +242,7 @@ final class MenuController: NSObject, NSMenuDelegate {
 
       // Only show family if there are models available to install
       let availableModels = validModels.filter {
-        !modelManager.isInstalled($0) && !modelManager.isDownloading($0)
+        modelManager.status(for: $0) == .available
       }
 
       if availableModels.isEmpty {
