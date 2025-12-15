@@ -102,7 +102,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     rootStack.alignment = .centerY
     contentView.addSubview(rootStack)
 
-    // Add rightStack separately to align with line 1
+    // Add rightStack separately to position it manually
     contentView.addSubview(rightStack)
 
     // Add action buttons separately so we can position them centered vertically
@@ -117,9 +117,9 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
       progressLabel.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.progressWidth),
 
-      // Position rightStack (progress) aligned with line 1
+      // Position rightStack (progress) centered vertically
       rightStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-      rightStack.firstBaselineAnchor.constraint(equalTo: modelNameLabel.firstBaselineAnchor),
+      rightStack.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
 
       // Position delete button at the right, centered vertically
       deleteImageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
