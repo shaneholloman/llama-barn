@@ -53,31 +53,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   private func setup() {
     wantsLayer = true
     iconView.imageView.image = NSImage(named: model.icon)
-
     progressLabel.alignment = .right
 
-    // Configure cancel button
-    if let img = NSImage(systemSymbolName: "xmark", accessibilityDescription: nil) {
-      cancelImageView.image = img
-    }
-    cancelImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
-    cancelImageView.contentTintColor = .systemRed
-    cancelImageView.isHidden = true
-
-    // Configure max context button
-    maxContextImageView.image = NSImage(
-      systemSymbolName: "gauge.high", accessibilityDescription: nil)
-    maxContextImageView.toolTip = "Run at max ctx"
-    maxContextImageView.contentTintColor = .tertiaryLabelColor
-    maxContextImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
-    maxContextImageView.isHidden = true
-
-    // Configure delete button
-    deleteImageView.image = NSImage(systemSymbolName: "trash", accessibilityDescription: nil)
-    deleteImageView.toolTip = "Delete model"
-    deleteImageView.contentTintColor = .tertiaryLabelColor
-    deleteImageView.symbolConfiguration = .init(pointSize: 13, weight: .regular)
-    deleteImageView.isHidden = true
+    configure(cancelImageView, symbol: "xmark", color: .systemRed)
+    configure(maxContextImageView, symbol: "gauge.high", tooltip: "Run at max ctx")
+    configure(deleteImageView, symbol: "trash", tooltip: "Delete model")
 
     // Spacer expands so trailing visuals sit flush right.
     let spacer = NSView()
@@ -121,10 +101,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     contentView.addSubview(rightStack)
 
     // Add action buttons separately so we can position them centered vertically
-    maxContextImageView.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(maxContextImageView)
-
-    deleteImageView.translatesAutoresizingMaskIntoConstraints = false
     contentView.addSubview(deleteImageView)
 
     rootStack.pinToSuperview()
@@ -161,26 +138,19 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   override func viewDidMoveToWindow() {
     super.viewDidMoveToWindow()
     if rowClickRecognizer == nil {
-      let click = NSClickGestureRecognizer(target: self, action: #selector(didClickRow))
-      click.delegate = self
-      addGestureRecognizer(click)
-      rowClickRecognizer = click
+      rowClickRecognizer = addGesture(to: self, action: #selector(didClickRow))
+      rowClickRecognizer?.delegate = self
     }
     if maxContextClickRecognizer == nil {
-      let click = NSClickGestureRecognizer(target: self, action: #selector(didClickMaxContext))
-      maxContextImageView.addGestureRecognizer(click)
-      maxContextClickRecognizer = click
+      maxContextClickRecognizer = addGesture(
+        to: maxContextImageView, action: #selector(didClickMaxContext))
     }
     if deleteClickRecognizer == nil {
-      let click = NSClickGestureRecognizer(target: self, action: #selector(didClickDelete))
-      deleteImageView.addGestureRecognizer(click)
-      deleteClickRecognizer = click
+      deleteClickRecognizer = addGesture(to: deleteImageView, action: #selector(didClickDelete))
     }
     if rightClickRecognizer == nil {
-      let rightClick = NSClickGestureRecognizer(target: self, action: #selector(didRightClick))
-      rightClick.buttonMask = 0x2  // Right mouse button
-      addGestureRecognizer(rightClick)
-      rightClickRecognizer = rightClick
+      rightClickRecognizer = addGesture(to: self, action: #selector(didRightClick))
+      rightClickRecognizer?.buttonMask = 0x2  // Right mouse button
     }
   }
 
@@ -239,50 +209,21 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
   func refresh() {
     let isActive = server.isActive(model: model)
     let isLoading = isActive && server.isLoading
-
-    // Progress and cancel button only for downloading
     let isDownloading = modelManager.downloadProgress(for: model) != nil
+    let textColor = isDownloading ? Theme.Colors.textSecondary : Theme.Colors.textPrimary
 
-    // Use secondary for downloading, primary for installed/running
-    let line1Color: NSColor
-    if isDownloading {
-      line1Color = Theme.Colors.textSecondary
-    } else {
-      line1Color = Theme.Colors.textPrimary
-    }
-    let nameAttr = Format.modelName(
+    modelNameLabel.attributedStringValue = Format.modelName(
       family: model.family,
       size: model.sizeLabel,
-      familyColor: line1Color,
-      sizeColor: line1Color
+      familyColor: textColor,
+      sizeColor: textColor
     )
 
-    modelNameLabel.attributedStringValue = nameAttr
-
-    // Line 2 uses secondary for downloading, primary otherwise
-    let line2Color: NSColor =
-      isDownloading
-      ? Theme.Colors.textSecondary
-      : Theme.Colors.textPrimary
-
     let metadata = NSMutableAttributedString(
-      attributedString: Format.modelMetadata(for: model, color: line2Color))
+      attributedString: Format.modelMetadata(for: model, color: textColor))
 
     if isActive && !isLoading, let ctx = server.activeCtxWindow {
-      let ctxString = Format.tokens(ctx)
-      let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(ctx))
-      let memText = Format.memory(mb: memMb)
-
-      metadata.append(Format.metadataSeparator())
-      metadata.append(
-        NSAttributedString(
-          string: "\(memText) mem · \(ctxString) ctx",
-          attributes: [
-            .font: Theme.Fonts.secondary,
-            .foregroundColor: Theme.Colors.textSecondary,
-          ]
-        )
-      )
+      appendRuntimeMetadata(to: metadata, ctx: ctx)
     }
 
     metadataLabel.attributedStringValue = metadata
@@ -290,12 +231,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     if let progress = modelManager.downloadProgress(for: model) {
       progressLabel.stringValue = Format.progressText(progress)
       cancelImageView.isHidden = false
-      iconView.inactiveTintColor = line2Color
     } else {
       progressLabel.stringValue = ""
       cancelImageView.isHidden = true
-      iconView.inactiveTintColor = line2Color
     }
+    iconView.inactiveTintColor = textColor
 
     // Delete button only for installed models on right-click
     // Reset showingDeleteButton if model is no longer installed
@@ -332,5 +272,42 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     showingDeleteButton = false
     modelManager.deleteDownloadedModel(model)
     membershipChanged(model)
+  }
+
+  // MARK: - Helpers
+
+  private func configure(
+    _ view: NSImageView, symbol: String, tooltip: String? = nil,
+    color: NSColor = .tertiaryLabelColor
+  ) {
+    view.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+    view.toolTip = tooltip
+    view.contentTintColor = color
+    view.symbolConfiguration = .init(pointSize: 13, weight: .regular)
+    view.isHidden = true
+    view.translatesAutoresizingMaskIntoConstraints = false
+  }
+
+  private func addGesture(to view: NSView, action: Selector) -> NSClickGestureRecognizer {
+    let click = NSClickGestureRecognizer(target: self, action: action)
+    view.addGestureRecognizer(click)
+    return click
+  }
+
+  private func appendRuntimeMetadata(to metadata: NSMutableAttributedString, ctx: Int) {
+    let ctxString = Format.tokens(ctx)
+    let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(ctx))
+    let memText = Format.memory(mb: memMb)
+
+    metadata.append(Format.metadataSeparator())
+    metadata.append(
+      NSAttributedString(
+        string: "\(memText) mem · \(ctxString) ctx",
+        attributes: [
+          .font: Theme.Fonts.secondary,
+          .foregroundColor: Theme.Colors.textSecondary,
+        ]
+      )
+    )
   }
 }
