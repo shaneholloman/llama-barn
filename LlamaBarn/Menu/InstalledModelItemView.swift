@@ -22,6 +22,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     return label
   }()
   private let cancelImageView = NSImageView()
+  private let rightStack = NSStackView()
   private let maxContextImageView = NSImageView()
   private let deleteImageView = NSImageView()
 
@@ -90,7 +91,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     cancelImageView.setContentHuggingPriority(.required, for: .horizontal)
     cancelImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
 
-    let rightStack = NSStackView(views: [progressLabel, cancelImageView])
+    rightStack.setViews([progressLabel, cancelImageView], in: .leading)
     rightStack.translatesAutoresizingMaskIntoConstraints = false
     rightStack.orientation = .horizontal
     rightStack.spacing = 6
@@ -232,9 +233,11 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
     if let progress = modelManager.downloadProgress(for: model) {
       progressLabel.stringValue = Format.progressText(progress)
       cancelImageView.isHidden = false
+      rightStack.isHidden = false
     } else {
       progressLabel.stringValue = ""
       cancelImageView.isHidden = true
+      rightStack.isHidden = true
     }
     iconView.inactiveTintColor = textColor
 
