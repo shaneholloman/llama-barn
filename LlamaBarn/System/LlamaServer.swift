@@ -300,7 +300,7 @@ class LlamaServer {
       let usableCtx = model.usableCtxWindow(
         desiredTokens: requestedCtx, maximizeContext: maximizeContext)
     else {
-      logger.error("No usable context window for model \(model.displayName, privacy: .public)")
+      logger.error("No usable context length for model \(model.displayName, privacy: .public)")
       return nil
     }
     let args = ["-c", String(usableCtx)] + sanitizedArgs

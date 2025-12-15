@@ -18,7 +18,7 @@ enum Format {
   /// Formats token counts using binary units (1k = 1024).
   /// Examples: 131_072 → "128k", 262_144 → "256k", 32_768 → "32k", 4_096 → "4k"
   /// Omits decimal point when fractional part is zero (e.g., "4k" not "4.0k").
-  /// Uses binary units since context windows represent memory allocation.
+  /// Uses binary units since context lengths represent memory allocation.
   static func tokens(_ tokens: Int) -> String {
     if tokens >= 1_048_576 {
       return formatDecimal(Double(tokens) / 1_048_576.0, unit: "m")
@@ -106,9 +106,9 @@ extension Format {
   // MARK: - Model Metadata (composite)
 
   /// Formats model metadata text.
-  /// Format: "2.53 GB" or "2.53 GB · 4.2 GB · Q4 · 👓"
-  /// (with memory usage shown when UserSettings.showMemUsageFor4kCtx is enabled,
-  /// using device-capable context if UserSettings.runAtMaxContext is enabled)
+  /// Format: "2.53 GB" or "2.53 GB · 4.2 GB mem at 128k ctx · Q4 · 👓"
+  /// (with memory usage shown when UserSettings.showEstimatedMemoryUsage is enabled,
+  /// using the selected default context)
   static func modelMetadata(for model: CatalogEntry, color: NSColor = Theme.Colors.textPrimary)
     -> NSAttributedString
   {
@@ -123,38 +123,40 @@ extension Format {
     result.append(
       NSAttributedString(string: model.totalSize, attributes: attributes))
 
-    // Memory usage (optional) - uses device-capable context if setting is enabled, otherwise 4k
-    if UserSettings.showMemUsageFor4kCtx {
+    // Quantization moved to model name
+
+    // Memory usage (optional) - uses the selected default context
+    if UserSettings.showEstimatedMemoryUsage {
       result.append(Format.metadataSeparator())
       let contextTokens: Double
-      if UserSettings.runAtMaxContext {
+      let usableCtx: Int
+      if UserSettings.defaultContextWindow == .max {
         // Use the actual context that will be used on this device (capped by memory)
-        contextTokens = Double(
+        usableCtx =
           model.usableCtxWindow(maximizeContext: true)
-            ?? Int(CatalogEntry.compatibilityCtxWindowTokens))
+          ?? Int(CatalogEntry.compatibilityCtxWindowTokens)
+        contextTokens = Double(usableCtx)
       } else {
-        contextTokens = CatalogEntry.compatibilityCtxWindowTokens
+        let desiredTokens = UserSettings.defaultContextWindow.rawValue * 1024
+        usableCtx =
+          model.usableCtxWindow(desiredTokens: desiredTokens, maximizeContext: false)
+          ?? Int(CatalogEntry.compatibilityCtxWindowTokens)
+        contextTokens = Double(usableCtx)
       }
       let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: contextTokens)
-      result.append(
-        NSAttributedString(string: Format.memory(mb: memMb) + " mem", attributes: attributes))
+      let memString = Format.memory(mb: memMb)
+      result.append(NSAttributedString(string: memString + " mem", attributes: attributes))
+      let desiredForDisplay =
+        UserSettings.defaultContextWindow == .max
+        ? model.ctxWindow : (UserSettings.defaultContextWindow.rawValue * 1024)
+      if usableCtx != desiredForDisplay {
+        result.append(NSAttributedString(string: " at ", attributes: attributes))
+        let ctxLabel = Format.tokens(usableCtx)
+        result.append(NSAttributedString(string: ctxLabel + " ctx", attributes: attributes))
+      }
     }
 
-    // Quantization
-    if model.quantizationLabel != nil {
-      result.append(Format.metadataSeparator())
-      result.append(
-        NSAttributedString(
-          string: model.quantizationLabel!,
-          attributes: attributes))
-    }
-
-    // Vision support
-    if model.hasVisionSupport {
-      result.append(Format.metadataSeparator())
-      result.append(
-        Format.symbol("eyeglasses", pointSize: Theme.Fonts.secondary.pointSize, color: color))
-    }
+    // Vision support removed - now shown in model name
 
     return result
   }
@@ -165,7 +167,9 @@ extension Format {
     family: String,
     size: String,
     familyColor: NSColor,
-    sizeColor: NSColor = Theme.Colors.textPrimary
+    sizeColor: NSColor = Theme.Colors.textPrimary,
+    hasVision: Bool = false,
+    quantization: String? = nil
   ) -> NSAttributedString {
     let result = NSMutableAttributedString()
     result.append(
@@ -174,6 +178,18 @@ extension Format {
     result.append(
       NSAttributedString(
         string: " \(size)", attributes: Theme.primaryAttributes(color: sizeColor)))
+    if hasVision {
+      result.append(NSAttributedString(string: " "))
+      result.append(
+        Format.symbol(
+          "eyeglasses", pointSize: Theme.Fonts.primary.pointSize, color: sizeColor))
+    }
+    if let quantization = quantization {
+      result.append(NSAttributedString(string: " "))
+      result.append(
+        Format.symbol(
+          "q.square", pointSize: Theme.Fonts.primary.pointSize, color: Theme.Colors.textSecondary))
+    }
     return result
   }
 }

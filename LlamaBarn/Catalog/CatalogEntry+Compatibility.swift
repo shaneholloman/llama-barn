@@ -13,7 +13,7 @@ extension CatalogEntry {
   /// default llama.cpp launches with when no explicit value is provided.
   static let compatibilityCtxWindowTokens: Double = 4_096
 
-  /// Models must support at least this context window to launch.
+  /// Models must support at least this context length to launch.
   static let minimumCtxWindowTokens: Double = compatibilityCtxWindowTokens
 
   static func availableMemoryFraction(forSystemMemoryMb systemMemoryMb: UInt64) -> Double {
@@ -35,7 +35,13 @@ extension CatalogEntry {
     let fileSizeWithOverheadMb = fileSizeWithOverhead
     if fileSizeWithOverheadMb > budgetMb { return nil }
 
-    let defaultContext = maximizeContext ? ctxWindow : Int(Self.compatibilityCtxWindowTokens)
+    let defaultContext =
+      maximizeContext
+      ? ctxWindow
+      : {
+        let setting = UserSettings.defaultContextWindow
+        return setting == .max ? ctxWindow : (setting.rawValue * 1024)
+      }()
     var effectiveDesired = desiredTokens.flatMap { $0 > 0 ? $0 : nil } ?? defaultContext
 
     // Cap desired context if env var is set

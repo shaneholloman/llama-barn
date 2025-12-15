@@ -59,8 +59,18 @@ final class CatalogModelItemView: ItemView {
     leading.alignment = .centerY
     leading.spacing = 6
 
-    contentView.addSubview(leading)
-    leading.pinToSuperview()
+    // Spacer
+    let spacer = NSView()
+    spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+    // Root stack: leading + spacer
+    let rootStack = NSStackView(views: [leading, spacer])
+    rootStack.orientation = .horizontal
+    rootStack.alignment = .top
+    rootStack.spacing = 6
+
+    contentView.addSubview(rootStack)
+    rootStack.pinToSuperview()
   }
 
   override func viewDidMoveToWindow() {
@@ -100,7 +110,9 @@ final class CatalogModelItemView: ItemView {
       family: model.family,
       size: model.sizeLabel,
       familyColor: Theme.Colors.textPrimary,
-      sizeColor: Theme.Colors.textPrimary
+      sizeColor: Theme.Colors.textPrimary,
+      hasVision: model.hasVisionSupport,
+      quantization: model.quantizationLabel
     )
 
     metadataLabel.attributedStringValue = Format.modelMetadata(for: model)

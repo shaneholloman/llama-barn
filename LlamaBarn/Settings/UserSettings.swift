@@ -2,11 +2,33 @@ import Foundation
 
 /// Centralized access to simple persisted preferences.
 enum UserSettings {
+  enum ContextWindowSize: Int, CaseIterable {
+    case fourK = 4
+    case eightK = 8
+    case sixteenK = 16
+    case thirtyTwoK = 32
+    case sixtyFourK = 64
+    case oneTwentyEightK = 128
+    case max = -1
+
+    var displayName: String {
+      switch self {
+      case .fourK: return "4k"
+      case .eightK: return "8k"
+      case .sixteenK: return "16k"
+      case .thirtyTwoK: return "32k"
+      case .sixtyFourK: return "64k"
+      case .oneTwentyEightK: return "128k"
+      case .max: return "Max"
+      }
+    }
+  }
+
   private enum Keys {
     static let hasSeenWelcome = "hasSeenWelcome"
     static let exposeToNetwork = "exposeToNetwork"
-    static let showMemUsageFor4kCtx = "showMemUsageFor4kCtx"
-    static let runAtMaxContext = "runAtMaxContext"
+    static let showEstimatedMemoryUsage = "showEstimatedMemoryUsage"
+    static let defaultContextWindow = "defaultContextWindow"
   }
 
   private static let defaults = UserDefaults.standard
@@ -36,28 +58,29 @@ enum UserSettings {
   }
 
   /// Whether to show estimated memory usage next to size on disk.
-  /// Shows 4k context by default, or device-capable context when 'Run at max context' is enabled.
+  /// Shows memory usage for the default context length, and context length if different.
   /// Defaults to `false`.
-  static var showMemUsageFor4kCtx: Bool {
+  static var showEstimatedMemoryUsage: Bool {
     get {
-      defaults.bool(forKey: Keys.showMemUsageFor4kCtx)
+      defaults.bool(forKey: Keys.showEstimatedMemoryUsage)
     }
     set {
-      guard defaults.bool(forKey: Keys.showMemUsageFor4kCtx) != newValue else { return }
-      defaults.set(newValue, forKey: Keys.showMemUsageFor4kCtx)
+      guard defaults.bool(forKey: Keys.showEstimatedMemoryUsage) != newValue else { return }
+      defaults.set(newValue, forKey: Keys.showEstimatedMemoryUsage)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
   }
 
-  /// Whether to run models at their maximum supported context window instead of the default 4k.
-  /// Defaults to `false`.
-  static var runAtMaxContext: Bool {
+  /// The default context length in thousands of tokens.
+  /// Defaults to 4k.
+  static var defaultContextWindow: ContextWindowSize {
     get {
-      defaults.bool(forKey: Keys.runAtMaxContext)
+      let rawValue = defaults.integer(forKey: Keys.defaultContextWindow)
+      return ContextWindowSize(rawValue: rawValue) ?? .fourK
     }
     set {
-      guard defaults.bool(forKey: Keys.runAtMaxContext) != newValue else { return }
-      defaults.set(newValue, forKey: Keys.runAtMaxContext)
+      guard defaults.integer(forKey: Keys.defaultContextWindow) != newValue.rawValue else { return }
+      defaults.set(newValue.rawValue, forKey: Keys.defaultContextWindow)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
   }

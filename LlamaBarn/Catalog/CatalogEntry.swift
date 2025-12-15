@@ -6,7 +6,7 @@ struct CatalogEntry: Identifiable, Codable {
   let family: String  // Model family name (e.g., "Qwen3", "Gemma 3n")
   let parameterCount: Int64  // Total model parameters (from HF API)
   let size: String  // Model size (e.g., "8B", "E4B")
-  let ctxWindow: Int  // Maximum context window in tokens
+  let ctxWindow: Int  // Maximum context length in tokens
   let fileSize: Int64  // File size in bytes for progress tracking and display
   /// Estimated KV-cache footprint for a 1k-token context, in bytes.
   /// This helps us preflight memory requirements before launching llama-server.
@@ -87,7 +87,7 @@ struct CatalogEntry: Identifiable, Codable {
     mmprojUrl != nil
   }
 
-  /// Estimated runtime memory (in MB) when running at the model's maximum context window.
+  /// Estimated runtime memory (in MB) when running at the model's maximum context length.
   var estimatedRuntimeMemoryMbAtMaxContext: UInt64 {
     let maxTokens =
       ctxWindow > 0

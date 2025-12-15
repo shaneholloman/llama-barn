@@ -325,25 +325,31 @@ final class MenuController: NSObject, NSMenuDelegate {
     let showMemUsageItem = NSMenuItem.viewItem(
       with: SettingsItemView(
         title: "Show estimated memory usage",
-        subtitle: "Shows estimate for device-capable context when 'Run at max context' is enabled",
-        getValue: { UserSettings.showMemUsageFor4kCtx },
+        getValue: { UserSettings.showEstimatedMemoryUsage },
         onToggle: { newValue in
-          UserSettings.showMemUsageFor4kCtx = newValue
+          UserSettings.showEstimatedMemoryUsage = newValue
         }
       ))
     menu.addItem(showMemUsageItem)
 
-    // Run at max context
-    let runAtMaxContextItem = NSMenuItem.viewItem(
-      with: SettingsItemView(
-        title: "Run at max context",
-        subtitle: "Use maximum supported context instead of default 4k",
-        getValue: { UserSettings.runAtMaxContext },
-        onToggle: { newValue in
-          UserSettings.runAtMaxContext = newValue
+    // Default context length
+    let contextWindowLabels = UserSettings.ContextWindowSize.allCases.map { $0.displayName }
+    let defaultContextWindowItem = NSMenuItem.viewItem(
+      with: SettingsSegmentedView(
+        title: "Context length",
+        subtitle: "Higher values use more memory",
+        labels: contextWindowLabels,
+        getSelectedIndex: {
+          UserSettings.ContextWindowSize.allCases.firstIndex(of: UserSettings.defaultContextWindow)
+            ?? 0
+        },
+        onSelect: { index in
+          if index >= 0 && index < UserSettings.ContextWindowSize.allCases.count {
+            UserSettings.defaultContextWindow = UserSettings.ContextWindowSize.allCases[index]
+          }
         }
       ))
-    menu.addItem(runAtMaxContextItem)
+    menu.addItem(defaultContextWindowItem)
 
     #if DEBUG
       // Expose to Network

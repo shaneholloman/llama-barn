@@ -198,8 +198,7 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       if server.isActive(model: model) {
         server.stop()
       } else {
-        let maximizeContext =
-          NSEvent.modifierFlags.contains(.option) || UserSettings.runAtMaxContext
+        let maximizeContext = NSEvent.modifierFlags.contains(.option)
         server.start(model: model, maximizeContext: maximizeContext)
       }
     } else if modelManager.isDownloading(model) {
@@ -219,15 +218,15 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
       family: model.family,
       size: model.sizeLabel,
       familyColor: textColor,
-      sizeColor: textColor
+      sizeColor: textColor,
+      hasVision: model.hasVisionSupport,
+      quantization: model.quantizationLabel
     )
 
     let metadata = NSMutableAttributedString(
       attributedString: Format.modelMetadata(for: model, color: textColor))
 
-    if isActive && !isLoading, let ctx = server.activeCtxWindow {
-      appendRuntimeMetadata(to: metadata, ctx: ctx)
-    }
+    // Runtime metadata removed - now shown in catalog when option is enabled
 
     metadataLabel.attributedStringValue = metadata
 
@@ -281,20 +280,5 @@ final class InstalledModelItemView: ItemView, NSGestureRecognizerDelegate {
 
   // MARK: - Helpers
 
-  private func appendRuntimeMetadata(to metadata: NSMutableAttributedString, ctx: Int) {
-    let ctxString = Format.tokens(ctx)
-    let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(ctx))
-    let memText = Format.memory(mb: memMb)
-
-    metadata.append(Format.metadataSeparator())
-    metadata.append(
-      NSAttributedString(
-        string: "\(memText) mem · \(ctxString) ctx",
-        attributes: [
-          .font: Theme.Fonts.secondary,
-          .foregroundColor: Theme.Colors.textSecondary,
-        ]
-      )
-    )
-  }
+  // Removed appendRuntimeMetadata - runtime info now shown in catalog when option is enabled
 }
