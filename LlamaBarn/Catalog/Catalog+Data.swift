@@ -261,9 +261,9 @@ extension Catalog {
         )
       ]
     ),
-    // MARK: Qwen3 2507
+    // MARK: Qwen3
     ModelFamily(
-      name: "Qwen3 2507",
+      name: "Qwen3",
       series: "qwen",
       serverArgs: ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95", "--min-p", "0"],
       overheadMultiplier: 1.1,
@@ -324,9 +324,9 @@ extension Catalog {
         ),
       ]
     ),
-    // MARK: Qwen3 2507 Thinking
+    // MARK: Qwen3 Thinking
     ModelFamily(
-      name: "Qwen3 2507 Thinking",
+      name: "Qwen3 Thinking",
       series: "qwen",
       serverArgs: ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95", "--min-p", "0"],
       overheadMultiplier: 1.1,
