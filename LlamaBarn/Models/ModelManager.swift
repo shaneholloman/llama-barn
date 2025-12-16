@@ -157,28 +157,35 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
     let paths = model.allLocalModelPaths
 
+    // Optimistically update state immediately for responsive UI
+    downloadedModels.removeAll { $0.id == model.id }
+    NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
+
     // Move file deletion to background queue to avoid blocking main thread
-    Task.detached { [weak self] in
+    let logger = self.logger
+    Task.detached {
       do {
-        // Delete files first, before modifying state
+        // Delete files
         for path in paths {
           if FileManager.default.fileExists(atPath: path) {
             try FileManager.default.removeItem(atPath: path)
           }
         }
-
-        // Only update state after successful deletion
-        await MainActor.run {
-          guard let self = self else { return }
-          self.downloadedModels.removeAll { $0.id == model.id }
-          NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
-        }
       } catch {
+        // If deletion failed, restore the model in the list
         await MainActor.run {
-          self?.logger.error("Failed to delete model: \(error.localizedDescription)")
+          Self.restoreDeletedModel(model, logger: logger, error: error)
         }
       }
     }
+  }
+
+  private static func restoreDeletedModel(_ model: CatalogEntry, logger: Logger, error: Error) {
+    let manager = ModelManager.shared
+    manager.downloadedModels.append(model)
+    manager.downloadedModels.sort(by: CatalogEntry.displayOrder(_:_:))
+    NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
+    logger.error("Failed to delete model: \(error.localizedDescription)")
   }
 
   /// Scans the local models directory and updates the list of downloaded models.
@@ -186,35 +193,35 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
     let modelsDir = CatalogEntry.modelStorageDirectory
 
     // Move directory reading to background queue to avoid blocking main thread
-    Task.detached { [weak self] in
-      guard let files = try? FileManager.default.contentsOfDirectory(atPath: modelsDir.path) else {
-        await MainActor.run {
-          guard let self = self else { return }
-          self.downloadedModels = []
-          NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
-        }
-        return
-      }
-      let fileSet = Set(files)
+    Task.detached {
+      let downloaded: [CatalogEntry]
+      if let files = try? FileManager.default.contentsOfDirectory(atPath: modelsDir.path) {
+        let fileSet = Set(files)
+        downloaded = Catalog.allModels().filter { model in
+          let mainFile = model.downloadUrl.lastPathComponent
+          if !fileSet.contains(mainFile) { return false }
 
-      let downloaded = Catalog.allModels().filter { model in
-        let mainFile = model.downloadUrl.lastPathComponent
-        if !fileSet.contains(mainFile) { return false }
-
-        if let additionalParts = model.additionalParts {
-          for part in additionalParts {
-            if !fileSet.contains(part.lastPathComponent) { return false }
+          if let additionalParts = model.additionalParts {
+            for part in additionalParts {
+              if !fileSet.contains(part.lastPathComponent) { return false }
+            }
           }
+          return true
         }
-        return true
+      } else {
+        downloaded = []
       }
 
       await MainActor.run {
-        guard let self = self else { return }
-        self.downloadedModels = downloaded
-        NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
+        Self.updateDownloadedModels(downloaded)
       }
     }
+  }
+
+  private static func updateDownloadedModels(_ models: [CatalogEntry]) {
+    let manager = ModelManager.shared
+    manager.downloadedModels = models
+    NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
   }
 
   /// Cancels an ongoing download.
