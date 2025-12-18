@@ -21,7 +21,6 @@ enum UserSettings {
   private enum Keys {
     static let hasSeenWelcome = "hasSeenWelcome"
     static let exposeToNetwork = "exposeToNetwork"
-    static let showEstimatedMemoryUsage = "showEstimatedMemoryUsage"
     static let defaultContextWindow = "defaultContextWindow"
     static let memoryUsageCap = "memoryUsageCap"
   }
@@ -48,20 +47,6 @@ enum UserSettings {
     set {
       guard defaults.bool(forKey: Keys.exposeToNetwork) != newValue else { return }
       defaults.set(newValue, forKey: Keys.exposeToNetwork)
-      NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
-    }
-  }
-
-  /// Whether to show estimated memory usage next to size on disk.
-  /// Shows memory usage for the context length the model would run at.
-  /// Defaults to `false`.
-  static var showEstimatedMemoryUsage: Bool {
-    get {
-      defaults.bool(forKey: Keys.showEstimatedMemoryUsage)
-    }
-    set {
-      guard defaults.bool(forKey: Keys.showEstimatedMemoryUsage) != newValue else { return }
-      defaults.set(newValue, forKey: Keys.showEstimatedMemoryUsage)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
   }

@@ -106,9 +106,7 @@ extension Format {
   // MARK: - Model Metadata (composite)
 
   /// Formats model metadata text.
-  /// Format: "2.53 GB" or "2.53 GB · 4.2 GB mem at 128k ctx · Q4 · 👓"
-  /// (with memory usage shown when UserSettings.showEstimatedMemoryUsage is enabled,
-  /// using the selected default context)
+  /// Format: "2.53 GB · 128k ctx"
   static func modelMetadata(for model: CatalogEntry, color: NSColor = Theme.Colors.textPrimary)
     -> NSAttributedString
   {
@@ -148,14 +146,6 @@ extension Format {
     result.append(Format.metadataSeparator())
     let ctxLabel = Format.tokens(displayUsableCtx)
     result.append(NSAttributedString(string: ctxLabel + " ctx", attributes: attributes))
-
-    // Memory usage (optional)
-    if UserSettings.showEstimatedMemoryUsage {
-      result.append(Format.metadataSeparator())
-      let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(displayUsableCtx))
-      let memString = Format.memory(mb: memMb)
-      result.append(NSAttributedString(string: memString + " mem", attributes: attributes))
-    }
 
     // Vision support removed - now shown in model name
 

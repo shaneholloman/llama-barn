@@ -299,17 +299,6 @@ final class MenuController: NSObject, NSMenuDelegate {
       ))
     menu.addItem(launchAtLoginItem)
 
-    // Show mem usage for 4k ctx
-    let showMemUsageItem = NSMenuItem.viewItem(
-      with: SettingsItemView(
-        title: "Show estimated memory usage",
-        getValue: { UserSettings.showEstimatedMemoryUsage },
-        onToggle: { newValue in
-          UserSettings.showEstimatedMemoryUsage = newValue
-        }
-      ))
-    menu.addItem(showMemUsageItem)
-
     // Default context length
     let contextWindowLabels = UserSettings.ContextWindowSize.allCases.map { $0.displayName }
     let defaultContextWindowItem = NSMenuItem.viewItem(
