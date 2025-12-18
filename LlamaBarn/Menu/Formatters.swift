@@ -144,13 +144,10 @@ extension Format {
       return result
     }
 
-    // Context info: displayed when the usable context is less than desired,
-    // either due to memory constraints or the model's maximum context window.
-    if displayUsableCtx != desiredTokens {
-      result.append(Format.metadataSeparator())
-      let ctxLabel = Format.tokens(displayUsableCtx)
-      result.append(NSAttributedString(string: ctxLabel + " ctx", attributes: attributes))
-    }
+    // Context info: always displayed as the context length the model would run at
+    result.append(Format.metadataSeparator())
+    let ctxLabel = Format.tokens(displayUsableCtx)
+    result.append(NSAttributedString(string: ctxLabel + " ctx", attributes: attributes))
 
     // Memory usage (optional)
     if UserSettings.showEstimatedMemoryUsage {

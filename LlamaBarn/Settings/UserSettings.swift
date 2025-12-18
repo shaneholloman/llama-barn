@@ -53,7 +53,7 @@ enum UserSettings {
   }
 
   /// Whether to show estimated memory usage next to size on disk.
-  /// Shows memory usage for the default context length, and context length if different.
+  /// Shows memory usage for the context length the model would run at.
   /// Defaults to `false`.
   static var showEstimatedMemoryUsage: Bool {
     get {
