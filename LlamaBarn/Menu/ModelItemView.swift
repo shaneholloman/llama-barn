@@ -12,7 +12,7 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
   private let model: CatalogEntry
   private unowned let server: LlamaServer
   private unowned let modelManager: ModelManager
-  private let membershipChanged: (CatalogEntry) -> Void
+  private let actionHandler: ModelActionHandler
 
   // Subviews
   private let progressLabel: NSTextField = {
@@ -33,12 +33,12 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
 
   init(
     model: CatalogEntry, server: LlamaServer, modelManager: ModelManager,
-    membershipChanged: @escaping (CatalogEntry) -> Void
+    actionHandler: ModelActionHandler
   ) {
     self.model = model
     self.server = server
     self.modelManager = modelManager
-    self.membershipChanged = membershipChanged
+    self.actionHandler = actionHandler
     super.init(frame: .zero)
 
     iconView.imageView.image = NSImage(named: model.icon)
@@ -106,11 +106,19 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     }
   }
 
-  @objc private func didClickRow() { toggle() }
+  @objc private func didClickRow() {
+    actionHandler.performPrimaryAction(for: model)
+    refresh()
+  }
 
-  @objc private func didClickDelete() { performDelete() }
+  @objc private func didClickDelete() {
+    showingDeleteButton = false
+    actionHandler.delete(model: model)
+  }
 
-  @objc private func didClickFinder() { performShowInFinder() }
+  @objc private func didClickFinder() {
+    actionHandler.showInFinder(model: model)
+  }
 
   @objc private func didRightClick() {
     // Only toggle delete button for installed models
@@ -136,36 +144,6 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     }
 
     return true
-  }
-
-  private func toggle() {
-    if modelManager.isInstalled(model) {
-      if server.isActive(model: model) {
-        server.stop()
-      } else {
-        let maximizeContext = NSEvent.modifierFlags.contains(.option)
-        server.start(model: model, maximizeContext: maximizeContext)
-      }
-    } else if modelManager.isDownloading(model) {
-      modelManager.cancelModelDownload(model)
-      membershipChanged(model)
-    } else {
-      // Available -> Download
-      do {
-        try modelManager.downloadModel(model)
-        membershipChanged(model)
-      } catch {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = error.localizedDescription
-        if let error = error as? LocalizedError, let recoverySuggestion = error.recoverySuggestion {
-          alert.informativeText = recoverySuggestion
-        }
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
-      }
-    }
-    refresh()
   }
 
   func refresh() {
@@ -227,18 +205,5 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     cancelImageView.contentTintColor = .systemRed
     finderImageView.contentTintColor = .tertiaryLabelColor
     deleteImageView.contentTintColor = .tertiaryLabelColor
-  }
-
-  @objc private func performDelete() {
-    guard modelManager.isInstalled(model) else { return }
-    showingDeleteButton = false
-    modelManager.deleteDownloadedModel(model)
-    membershipChanged(model)
-  }
-
-  @objc private func performShowInFinder() {
-    guard modelManager.isInstalled(model) else { return }
-    let url = URL(fileURLWithPath: model.modelFilePath)
-    NSWorkspace.shared.activateFileViewerSelecting([url])
   }
 }

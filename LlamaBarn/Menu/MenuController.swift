@@ -8,6 +8,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   private let statusItem: NSStatusItem
   private let modelManager: ModelManager
   private let server: LlamaServer
+  private var actionHandler: ModelActionHandler!
 
   // Section State
   private var isSettingsOpen = false
@@ -20,6 +21,16 @@ final class MenuController: NSObject, NSMenuDelegate {
     self.modelManager = modelManager ?? .shared
     self.server = server ?? .shared
     super.init()
+
+    self.actionHandler = ModelActionHandler(
+      modelManager: self.modelManager,
+      server: self.server,
+      onMembershipChange: { [weak self] _ in
+        self?.rebuildMenuIfPossible()
+        self?.refresh()
+      }
+    )
+
     configureStatusItem()
     setupObservers()
     showWelcomeIfNeeded()
@@ -92,13 +103,6 @@ final class MenuController: NSObject, NSMenuDelegate {
   }
 
   // MARK: - Live updates without closing submenus
-
-  /// Called from model rows when a user starts/cancels a download.
-  /// Rebuilds both installed and catalog sections to reflect changes while keeping submenus open.
-  private func didChangeDownloadStatus(for _: CatalogEntry) {
-    rebuildMenuIfPossible()
-    refresh()
-  }
 
   private func rebuildMenuIfPossible() {
     if let menu = statusItem.menu {
@@ -210,10 +214,9 @@ final class MenuController: NSObject, NSMenuDelegate {
       let view = ModelItemView(
         model: model,
         server: server,
-        modelManager: modelManager
-      ) { [weak self] entry in
-        self?.didChangeDownloadStatus(for: entry)
-      }
+        modelManager: modelManager,
+        actionHandler: actionHandler
+      )
       return NSMenuItem.viewItem(with: view)
     }
   }
@@ -256,10 +259,9 @@ final class MenuController: NSObject, NSMenuDelegate {
           let view = ModelItemView(
             model: model,
             server: server,
-            modelManager: modelManager
-          ) { [weak self] entry in
-            self?.didChangeDownloadStatus(for: entry)
-          }
+            modelManager: modelManager,
+            actionHandler: actionHandler
+          )
           items.append(NSMenuItem.viewItem(with: view))
         }
       }
