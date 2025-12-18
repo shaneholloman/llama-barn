@@ -14,6 +14,22 @@ extension CatalogEntry {
     return UserSettings.memoryUsageCap
   }
 
+  static func maxAvailableMemoryFraction(forSystemMemoryMb systemMemoryMb: UInt64) -> Double {
+    return systemMemoryMb >= 128 * 1024 ? 0.75 : 0.5
+  }
+
+  func fitsInCurrentCap(
+    ctxWindowTokens: Double = compatibilityCtxWindowTokens
+  ) -> Bool {
+    let sysMem = SystemMemory.memoryMb
+    guard sysMem > 0 else { return false }
+
+    let budgetMb = Self.memoryBudget(systemMemoryMb: sysMem)
+    let estimatedMemoryUsageMb = runtimeMemoryUsageMb(ctxWindowTokens: ctxWindowTokens)
+
+    return estimatedMemoryUsageMb <= UInt64(budgetMb)
+  }
+
   func usableCtxWindow(
     desiredTokens: Int? = nil,
     maximizeContext: Bool = false
@@ -111,6 +127,12 @@ extension CatalogEntry {
     return Double(systemMemoryMb) * memoryFraction
   }
 
+  /// Calculates max memory budget in MB based on system memory (ignoring user cap)
+  private static func maxMemoryBudget(systemMemoryMb: UInt64) -> Double {
+    let memoryFraction = maxAvailableMemoryFraction(forSystemMemoryMb: systemMemoryMb)
+    return Double(systemMemoryMb) * memoryFraction
+  }
+
   /// Computes compatibility info for a model
   private func compatibilityInfo(
     ctxWindowTokens: Double = compatibilityCtxWindowTokens
@@ -133,7 +155,7 @@ extension CatalogEntry {
       ctxWindowTokens: ctxWindowTokens)
 
     func memoryRequirementSummary() -> String {
-      let memoryFraction = Self.availableMemoryFraction(forSystemMemoryMb: sysMem)
+      let memoryFraction = Self.maxAvailableMemoryFraction(forSystemMemoryMb: sysMem)
       let requiredTotalMb = UInt64(ceil(Double(estimatedMemoryUsageMb) / memoryFraction))
       let gb = ceil(Double(requiredTotalMb) / 1024.0)
       return String(format: "requires %.0f GB+ of memory", gb)
@@ -146,7 +168,7 @@ extension CatalogEntry {
       )
     }
 
-    let budgetMb = Self.memoryBudget(systemMemoryMb: sysMem)
+    let budgetMb = Self.maxMemoryBudget(systemMemoryMb: sysMem)
     let isCompatible = estimatedMemoryUsageMb <= UInt64(budgetMb)
 
     return CompatibilityInfo(

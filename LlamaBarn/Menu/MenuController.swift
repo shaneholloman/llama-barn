@@ -338,7 +338,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     }
     let memoryCapItem = NSMenuItem.viewItem(
       with: SettingsSegmentedView(
-        title: "Memory cap",
+        title: "Memory limit",
         subtitle: nil,
         infoText: "Limits the amount of memory models can use.",
         labels: memoryCapLabels,
