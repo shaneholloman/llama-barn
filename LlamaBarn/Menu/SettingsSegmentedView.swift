@@ -35,7 +35,7 @@ final class SettingsSegmentedView: StandardItemView {
     }
     segmentedControl.target = self
     segmentedControl.action = #selector(segmentChanged)
-    segmentedControl.controlSize = .small
+    segmentedControl.controlSize = .mini
     segmentedControl.font = NSFont.systemFont(ofSize: 10)
     segmentedControl.segmentDistribution = .fillEqually
     segmentedControl.appearance = NSApp.effectiveAppearance
