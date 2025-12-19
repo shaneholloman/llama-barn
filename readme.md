@@ -14,37 +14,33 @@ LlamaBarn is a tiny menu bar app that lets you install and run local LLMs with j
 
 LlamaBarn runs as a tiny menu bar app on your Mac.
 
-- `Install a model from the built-in catalog` -- only models that can run on your Mac are shown
-- `Select an installed model to run it` -- configures and starts a server at `http://localhost:2276`
-- `Use the running model via the API or web UI` -- both at `http://localhost:2276`
+- **Install a model from the built-in catalog** -- only models that can run on your Mac are shown
+- **Select an installed model to run it** -- configures and starts a server at `http://localhost:2276`
+- **Use the running model via the API or web UI** -- both at `http://localhost:2276`
 
-LlamaBarn builds on `llama.cpp` and the `llama-server` that comes with it. `llama-server` runs the API and web UI, while LlamaBarn handles model installation, configuration, and process management.
+Under the hood LlamaBarn uses `llama.cpp` and runs models with no external dependencies.
 
 ## Use cases
 
-You can use LlamaBarn in any app that supports custom LLM APIs:
+Connect to any app that supports custom APIs:
 
-- chat interfaces
-- scripts
-- coding assistants
-- automation workflows
+- **chat UIs** like `Chatbox` or `Open WebUI`
+- **CLI assistants** like `OpenCode` or `Codex`
+- **editors** like `VS Code` or `Zed`
+- **editor extensions** like `Cline` or `Continue`
+- **custom scripts** using `curl` or libs like `ai sdk`
 
 Or use the built-in web UI at `http://localhost:2276` to chat with the running model directly.
 
 ## Endpoints
 
-LlamaBarn builds on `llama-server` and supports the same API endpoints:
+LlamaBarn builds on the `llama.cpp` server and supports the same API endpoints:
 
 ```sh
-# say "Hi" to the running model
+# say "Hello" to the running model
 curl http://localhost:2276/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"messages": [{"role": "user", "content": "Hi"}]}'
+  -d '{"messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
 See complete reference in `llama-server` [docs ↗](https://github.com/ggml-org/llama.cpp/tree/master/tools/server#api-endpoints)
-
-## Questions
-
-- **Why don't I see certain models in the catalog?** — LlamaBarn excludes models that require more memory than your Mac can provide. You see only the models that you can run.
-- **Can I load models that aren't in the catalog?** — Loading arbitrary models isn't currently supported, but if there's a specific model you'd like to see added, feel free to open a feature request.
