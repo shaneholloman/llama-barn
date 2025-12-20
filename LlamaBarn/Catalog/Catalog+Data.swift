@@ -653,6 +653,42 @@ extension Catalog {
         )
       ]
     ),
+    // MARK: Nemotron Nano 3
+    ModelFamily(
+      name: "Nemotron Nano 3",
+      series: "nvidia",
+      // Sliding-window family: use max context by default
+      serverArgs: ["-c", "0"],
+      sizes: [
+        ModelSize(
+          name: "30B-A3B",
+          parameterCount: 31_577_900_000,
+          releaseDate: date(2025, 12, 15),
+          ctxWindow: 262_144,
+          ctxBytesPer1kTokens: 100_663_296,
+          build: ModelBuild(
+            id: "nemotron-nano-3-30b-q8",
+            quantization: "Q8_0",
+            fileSize: 36_079_673_344,
+            downloadUrl: URL(
+              string:
+                "https://huggingface.co/ggml-org/Nemotron-Nano-3-30B-A3B-GGUF/resolve/main/Nemotron-Nano-3-30B-A3B-Q8_0.gguf"
+            )!
+          ),
+          quantizedBuilds: [
+            ModelBuild(
+              id: "nemotron-nano-3-30b",
+              quantization: "Q4_K_M",
+              fileSize: 26_310_344_704,
+              downloadUrl: URL(
+                string:
+                  "https://huggingface.co/ggml-org/Nemotron-Nano-3-30B-A3B-GGUF/resolve/main/Nemotron-Nano-3-30B-A3B-Q4_K_M.gguf"
+              )!
+            )
+          ]
+        )
+      ]
+    ),
     // MARK: Ministral 3
     ModelFamily(
       name: "Ministral 3",
