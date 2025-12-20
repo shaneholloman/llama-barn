@@ -662,14 +662,14 @@ extension Catalog {
       sizes: [
         ModelSize(
           name: "30B-A3B",
-          parameterCount: 31_577_900_000,
+          parameterCount: 31_577_940_288,
           releaseDate: date(2025, 12, 15),
           ctxWindow: 262_144,
           ctxBytesPer1kTokens: 100_663_296,
           build: ModelBuild(
             id: "nemotron-nano-3-30b-q8",
             quantization: "Q8_0",
-            fileSize: 36_079_673_344,
+            fileSize: 33_585_495_328,
             downloadUrl: URL(
               string:
                 "https://huggingface.co/ggml-org/Nemotron-Nano-3-30B-A3B-GGUF/resolve/main/Nemotron-Nano-3-30B-A3B-Q8_0.gguf"
@@ -679,7 +679,7 @@ extension Catalog {
             ModelBuild(
               id: "nemotron-nano-3-30b",
               quantization: "Q4_K_M",
-              fileSize: 26_310_344_704,
+              fileSize: 24_515_129_632,
               downloadUrl: URL(
                 string:
                   "https://huggingface.co/ggml-org/Nemotron-Nano-3-30B-A3B-GGUF/resolve/main/Nemotron-Nano-3-30B-A3B-Q4_K_M.gguf"
