@@ -129,7 +129,11 @@ extension CatalogEntry {
       let memoryFraction = Self.availableMemoryFraction(forSystemMemoryMb: sysMem)
       let requiredTotalMb = UInt64(ceil(Double(estimatedMemoryUsageMb) / memoryFraction))
       let gb = ceil(Double(requiredTotalMb) / 1024.0)
-      return String(format: "requires %.0f GB+ of memory", gb)
+
+      let commonSizes: [Double] = [8, 16, 18, 24, 32, 36, 48, 64, 96, 128, 192]
+      let displayGb = commonSizes.first(where: { $0 >= gb }) ?? gb
+
+      return String(format: "Requires a Mac with %.0f GB+ of memory", displayGb)
     }
 
     guard sysMem > 0 else {

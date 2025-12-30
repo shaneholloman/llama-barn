@@ -107,7 +107,7 @@ extension Format {
 
   /// Formats model metadata text.
   /// Format: "2.53 GB · 128k ctx · 4.2 GB mem"
-  /// If incompatibility is provided: "requires 32 GB+ of memory"
+  /// If incompatibility is provided: "Requires a Mac with 32 GB+ of memory"
   static func modelMetadata(
     for model: CatalogEntry,
     color: NSColor = Theme.Colors.textPrimary,
