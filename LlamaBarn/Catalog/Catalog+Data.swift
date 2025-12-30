@@ -15,7 +15,7 @@ extension Catalog {
       name: "GPT-OSS",
       series: "gpt",
       description:
-        "OpenAI's open-weight models (20B-120B parameters) for high-reasoning and agentic tasks. Optimized for Apple Silicon Macs with quantization for efficient local execution using Metal acceleration.",
+        "OpenAI's first open-weight models since GPT-2. Built for reasoning, agentic tasks, and developer use with function calling and tool use capabilities.",
       // Sliding-window family: use max context by default
       serverArgs: ["-c", "0", "--temp", "1.0", "--top-p", "1.0"],
       sizes: [
@@ -68,7 +68,7 @@ extension Catalog {
       name: "Gemma 3",
       series: "gemma",
       description:
-        "Google's multimodal, multilingual models (1B-27B parameters) with 128k contexts for text generation, image understanding, and reasoning. Lightweight for Apple Silicon Macs. Note: 270M/1B are text-only; multimodal from 4B.",
+        "Google's multimodal models built from Gemini technology. Supports 140+ languages, vision, and text tasks with 128K context for edge to cloud deployment.",
       serverArgs: nil,
       overheadMultiplier: 1.3,
       sizes: [
@@ -171,7 +171,7 @@ extension Catalog {
       name: "Qwen3",
       series: "qwen",
       description:
-        "Alibaba's dense and MoE models (0.6B+ parameters) for language understanding and generation. Scalable on Apple Silicon Macs with quantization for fast local inference.",
+        "Alibaba's hybrid reasoning models with thinking/non-thinking modes. Excels at coding, math, and multilingual tasks across 119 languages.",
       serverArgs: ["--temp", "0.6", "--top-k", "20", "--top-p", "0.95", "--min-p", "0"],
       overheadMultiplier: 1.1,
       sizes: [
@@ -290,7 +290,7 @@ extension Catalog {
       name: "Qwen3 VL",
       series: "qwen",
       description:
-        "Alibaba's vision-language models (e.g., 8B-Instruct) for image-text integration and visual question answering. Efficient on Apple Silicon Macs for local multimodal processing.",
+        "Alibaba's vision-language model for understanding text, images, and video. Features OCR in 32 languages, GUI agents, and spatial reasoning.",
       serverArgs: ["--temp", "0.7", "--top-p", "0.8", "--top-k", "20"],
       overheadMultiplier: 1.1,
       sizes: [
@@ -549,7 +549,7 @@ extension Catalog {
       name: "Qwen3 Coder",
       series: "qwen",
       description:
-        "Alibaba's code-focused models (e.g., 480B-A35B) for programming, code generation, and debugging. Efficient on Apple Silicon Macs with quantization for fast local execution.",
+        "Alibaba's specialized coding model for agentic software engineering. Optimized for function calling, tool use, and repository-scale reasoning.",
       serverArgs: ["--temp", "0.7", "--top-p", "0.8", "--top-k", "20"],
       overheadMultiplier: 1.1,
       sizes: [
@@ -587,7 +587,7 @@ extension Catalog {
       name: "Nemotron Nano 3",
       series: "nvidia",
       description:
-        "NVIDIA's efficient LLM (3.2B active/31.6B total MoE) for reasoning and general tasks. Open weights for Apple Silicon Macs, enabling low-memory local inference.",
+        "NVIDIA's efficient hybrid MoE model for agentic AI. Built for reasoning, coding, and tool use with 1M token context and 4x faster throughput.",
       // Sliding-window family: use max context by default
       serverArgs: ["-c", "0"],
       sizes: [
@@ -625,7 +625,7 @@ extension Catalog {
       name: "Ministral 3",
       series: "mistral",
       description:
-        "Mistral AI's tiny multimodal models (3B-14B) for text and image tasks. Lightweight for Apple Silicon Macs.",
+        "Mistral AI's compact edge models with vision capabilities. Offers best cost-to-performance ratio for on-device deployment in 3B, 8B, 14B sizes.",
       serverArgs: nil,
       sizes: [
         ModelSize(
@@ -821,7 +821,7 @@ extension Catalog {
       name: "Devstral 2",
       series: "mistral",
       description:
-        "Mistral AI's agentic LLM (e.g., 123B) for software engineering, tool usage, and multi-file editing. Optimized for Apple Silicon Macs, efficient for large contexts and debugging.",
+        "Mistral AI's agentic coding models for software engineering tasks. Excels at exploring codebases, multi-file editing, and powering code agents.",
       serverArgs: nil,
       sizes: [
         ModelSize(
