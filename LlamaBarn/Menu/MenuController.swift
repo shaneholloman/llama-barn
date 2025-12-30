@@ -197,13 +197,13 @@ final class MenuController: NSObject, NSMenuDelegate {
     let models = installedModels()
     guard !models.isEmpty else { return }
 
-    // Create header (not collapsible)
-    let headerView = FamilyHeaderView(
+    // Create family item (not collapsible)
+    let familyView = FamilyItemView(
       family: "Installed",
       sizes: []
     )
-    let headerItem = NSMenuItem.viewItem(with: headerView)
-    menu.addItem(headerItem)
+    let familyItem = NSMenuItem.viewItem(with: familyView)
+    menu.addItem(familyItem)
 
     // Always show models
     buildInstalledItems(models).forEach { menu.addItem($0) }
@@ -233,8 +233,8 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     menu.addItem(NSMenuItem.viewItem(with: SeparatorView()))
 
-    // Back Header
-    let backView = FamilyHeaderView(
+    // Back Item
+    let backView = FamilyItemView(
       family: familyName,
       sizes: [],
       description: family.description,
@@ -276,7 +276,7 @@ final class MenuController: NSObject, NSMenuDelegate {
         continue
       }
 
-      // Collect unique sizes for header from available models
+      // Collect unique sizes for family item from available models
       let sizes =
         availableModels
         .sorted { $0.parameterCount < $1.parameterCount }
@@ -294,7 +294,7 @@ final class MenuController: NSObject, NSMenuDelegate {
           }
         }
 
-      let headerView = FamilyHeaderView(
+      let familyView = FamilyItemView(
         family: family.name,
         sizes: sizes,
         description: family.description
@@ -302,8 +302,8 @@ final class MenuController: NSObject, NSMenuDelegate {
         self?.selectedFamily = familyName
         self?.rebuildMenuIfPossible()
       }
-      let headerItem = NSMenuItem.viewItem(with: headerView)
-      items.append(headerItem)
+      let familyItem = NSMenuItem.viewItem(with: familyView)
+      items.append(familyItem)
     }
 
     guard !items.isEmpty else { return }

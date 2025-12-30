@@ -160,8 +160,8 @@ extension Format {
     return result
   }
 
-  /// Formats family header text as "Family  ∣  Size · Size".
-  static func familyHeader(name: String, sizes: [(String, Bool)]) -> NSAttributedString {
+  /// Formats family item text as "Family  ∣  Size · Size".
+  static func familyItem(name: String, sizes: [(String, Bool)]) -> NSAttributedString {
     let result = NSMutableAttributedString()
 
     // Family name (more prominent)

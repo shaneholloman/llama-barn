@@ -1,7 +1,7 @@
 import AppKit
 
-/// Interactive header for catalog families.
-final class FamilyHeaderView: ItemView {
+/// Interactive item for catalog families.
+final class FamilyItemView: ItemView {
   private let label = Theme.tertiaryLabel()
   private let descriptionLabel = Theme.tertiaryLabel()
   private let chevronView = NSImageView()
@@ -20,7 +20,7 @@ final class FamilyHeaderView: ItemView {
     super.init(frame: .zero)
 
     label.translatesAutoresizingMaskIntoConstraints = false
-    label.attributedStringValue = Format.familyHeader(name: family, sizes: sizes)
+    label.attributedStringValue = Format.familyItem(name: family, sizes: sizes)
     label.lineBreakMode = .byTruncatingTail
 
     descriptionLabel.translatesAutoresizingMaskIntoConstraints = false
