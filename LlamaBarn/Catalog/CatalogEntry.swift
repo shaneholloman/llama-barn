@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a complete AI model configuration with metadata and file locations
-struct CatalogEntry: Identifiable, Codable {
+struct CatalogEntry: Identifiable {
   let id: String  // Unique identifier for the model
   let family: String  // Model family name (e.g., "Qwen3", "Gemma 3n")
   let parameterCount: Int64  // Total model parameters (from HF API)

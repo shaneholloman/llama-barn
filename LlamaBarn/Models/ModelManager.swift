@@ -15,6 +15,12 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
   var downloadedModels: [CatalogEntry] = []
 
+  /// Returns a sorted list of all models that are either installed or currently downloading.
+  /// This is the primary list shown in the "Installed" section of the menu.
+  var managedModels: [CatalogEntry] {
+    (downloadedModels + downloadingModels).sorted(by: CatalogEntry.displayOrder(_:_:))
+  }
+
   var downloadingModels: [CatalogEntry] {
     activeDownloads.values.map { $0.model }
   }
@@ -174,7 +180,7 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
   private static func updateDownloadedModels(_ models: [CatalogEntry]) {
     let manager = ModelManager.shared
-    manager.downloadedModels = models
+    manager.downloadedModels = models.sorted(by: CatalogEntry.displayOrder(_:_:))
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
   }
 

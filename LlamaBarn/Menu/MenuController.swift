@@ -194,7 +194,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   // MARK: - Installed Section
 
   private func addInstalledSection(to menu: NSMenu) {
-    let models = installedModels()
+    let models = modelManager.managedModels
     guard !models.isEmpty else { return }
 
     // Create family item (not collapsible)
@@ -207,11 +207,6 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     // Always show models
     buildInstalledItems(models).forEach { menu.addItem($0) }
-  }
-
-  private func installedModels() -> [CatalogEntry] {
-    return (modelManager.downloadedModels + modelManager.downloadingModels)
-      .sorted(by: CatalogEntry.displayOrder(_:_:))
   }
 
   private func buildInstalledItems(_ models: [CatalogEntry]) -> [NSMenuItem] {
