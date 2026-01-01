@@ -232,13 +232,18 @@ final class MenuController: NSObject, NSMenuDelegate {
     let backView = FamilyItemView(
       family: familyName,
       sizes: [],
-      description: family.description,
+      description: nil,
       isExpanded: true
     ) { [weak self] _ in
       self?.selectedFamily = nil
       self?.rebuildMenuIfPossible()
     }
     menu.addItem(NSMenuItem.viewItem(with: backView))
+
+    if let description = family.description {
+      let descriptionView = DescriptionItemView(text: description)
+      menu.addItem(NSMenuItem.viewItem(with: descriptionView))
+    }
 
     let validModels = family.selectableModels()
     let availableModels = validModels.filter {
