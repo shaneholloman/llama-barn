@@ -229,7 +229,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     menu.addItem(NSMenuItem.viewItem(with: SeparatorView()))
 
     // Back Item
-    let backView = BackItemView(title: "Catalog") { [weak self] in
+    let backView = BackItemView(title: "back") { [weak self] in
       self?.selectedFamily = nil
       self?.rebuildMenuIfPossible()
     }

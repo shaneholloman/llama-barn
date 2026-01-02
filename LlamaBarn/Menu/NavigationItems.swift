@@ -13,7 +13,7 @@ final class BackItemView: ItemView {
     // Icon
     Theme.configure(
       iconView,
-      symbol: "chevron.left",
+      symbol: "arrow.left",
       color: Theme.Colors.textSecondary,
       pointSize: 10
     )
