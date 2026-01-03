@@ -2,13 +2,15 @@
 
 LlamaBarn is a tiny (`12 MB`) menu bar app that makes running local LLMs as easy as connecting to Wi-Fi.
 
-**Install** with `brew install --cask llamabarn` or download from [Releases ↗](https://github.com/ggml-org/LlamaBarn/releases)
-
 <br>
 
 ![LlamaBarn](https://github.com/user-attachments/assets/ec4237e4-3a7b-41b7-8506-445838f0519f)
 
 <br>
+
+## Installation
+
+Install with `brew install --cask llamabarn` or download from [Releases ↗](https://github.com/ggml-org/LlamaBarn/releases)
 
 ## Why LlamaBarn
 
@@ -31,8 +33,6 @@ LlamaBarn runs as a menu bar app on your Mac.
 - **Install a model from the built-in catalog** -- only models that can run on your Mac are shown
 - **Select an installed model to run it** -- configures and starts a server at `http://localhost:2276`
 - **Use the running model via the API or web UI** -- both at `http://localhost:2276`
-
-That's it! Just 1️⃣ install, 2️⃣ run, and 3️⃣ connect.
 
 ## Common use cases
 
