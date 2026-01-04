@@ -101,6 +101,22 @@ struct CatalogEntry: Identifiable {
     Self.modelStorageDirectory.appendingPathComponent(downloadUrl.lastPathComponent).path
   }
 
+  /// The URL to the model's page on Hugging Face
+  var huggingFaceUrl: URL {
+    // Assuming downloadUrl is like https://huggingface.co/{user}/{repo}/...
+    let components = downloadUrl.pathComponents
+    if components.count >= 3 {
+      let user = components[1]
+      let repo = components[2]
+      if let url = URL(string: "https://huggingface.co/\(user)/\(repo)") {
+        return url
+      }
+    }
+    // Fallback to the root of the download URL if parsing fails
+    return downloadUrl.deletingLastPathComponent().deletingLastPathComponent()
+      .deletingLastPathComponent()
+  }
+
   /// The local file system path where the mmproj file will be stored, if applicable
   var mmprojFilePath: String? {
     guard let mmprojUrl = mmprojUrl else { return nil }

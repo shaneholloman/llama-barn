@@ -48,6 +48,10 @@ final class ModelActionHandler {
     NSWorkspace.shared.activateFileViewerSelecting([url])
   }
 
+  func openHuggingFacePage(model: CatalogEntry) {
+    NSWorkspace.shared.open(model.huggingFaceUrl)
+  }
+
   private func startDownload(for model: CatalogEntry) {
     do {
       try modelManager.downloadModel(model)

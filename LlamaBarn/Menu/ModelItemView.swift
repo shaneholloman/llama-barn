@@ -24,9 +24,10 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
   private let cancelImageView = NSImageView()
   private let finderImageView = NSImageView()
   private let deleteImageView = NSImageView()
+  private let hfImageView = NSImageView()
 
   // Hover handling is provided by MenuItemView
-  private var showingDeleteButton = false
+  private var showingActions = false
 
   init(
     model: CatalogEntry, server: LlamaServer, modelManager: ModelManager,
@@ -45,15 +46,18 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     Theme.configure(cancelImageView, symbol: "xmark", color: .systemRed)
     Theme.configure(finderImageView, symbol: "folder", tooltip: "Show in Finder")
     Theme.configure(deleteImageView, symbol: "trash", tooltip: "Delete model")
+    Theme.configure(hfImageView, symbol: "globe", tooltip: "Open on Hugging Face")
 
     // Start hidden
     cancelImageView.isHidden = true
     finderImageView.isHidden = true
     deleteImageView.isHidden = true
+    hfImageView.isHidden = true
     progressLabel.isHidden = true
 
     accessoryStack.addArrangedSubview(progressLabel)
     accessoryStack.addArrangedSubview(cancelImageView)
+    accessoryStack.addArrangedSubview(hfImageView)
     accessoryStack.addArrangedSubview(finderImageView)
     accessoryStack.addArrangedSubview(deleteImageView)
 
@@ -68,6 +72,9 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
 
       deleteImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
       deleteImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
+
+      hfImageView.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
+      hfImageView.heightAnchor.constraint(lessThanOrEqualToConstant: Layout.uiIconSize),
     ])
 
     titleLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
@@ -78,6 +85,8 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     cancelImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
     finderImageView.setContentHuggingPriority(.required, for: .horizontal)
     finderImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+    hfImageView.setContentHuggingPriority(.required, for: .horizontal)
+    hfImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
 
     setupGestures()
     refresh()
@@ -93,6 +102,7 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
 
     addGesture(to: deleteImageView, action: #selector(didClickDelete))
     addGesture(to: finderImageView, action: #selector(didClickFinder))
+    addGesture(to: hfImageView, action: #selector(didClickHF))
     addGesture(action: #selector(didRightClick), buttonMask: 0x2)
   }
 
@@ -106,7 +116,7 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
   }
 
   @objc private func didClickDelete() {
-    showingDeleteButton = false
+    showingActions = false
     actionHandler.delete(model: model)
   }
 
@@ -114,10 +124,12 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     actionHandler.showInFinder(model: model)
   }
 
+  @objc private func didClickHF() {
+    actionHandler.openHuggingFacePage(model: model)
+  }
+
   @objc private func didRightClick() {
-    // Only toggle delete button for installed models
-    guard modelManager.isInstalled(model) else { return }
-    showingDeleteButton.toggle()
+    showingActions.toggle()
     refresh()
   }
 
@@ -134,6 +146,11 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
 
     let finderPoint = finderImageView.convert(loc, from: nil)
     if finderImageView.bounds.contains(finderPoint) && !finderImageView.isHidden {
+      return false
+    }
+
+    let hfPoint = hfImageView.convert(loc, from: nil)
+    if hfImageView.bounds.contains(hfPoint) && !hfImageView.isHidden {
       return false
     }
 
@@ -187,12 +204,15 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
       isCompatible ? Theme.Colors.modelIconTint : Theme.Colors.textSecondary
 
     // Delete and finder buttons only for installed models on right-click
-    // Reset showingDeleteButton if model is no longer installed
-    if !isInstalled {
-      showingDeleteButton = false
+    // Reset showingActions if model is no longer installed
+    if !isInstalled && showingActions {
+      // If not installed, we still might want to show HF button, so don't reset showingActions
+      // But we need to make sure delete/finder are hidden.
     }
-    deleteImageView.isHidden = !showingDeleteButton
-    finderImageView.isHidden = !showingDeleteButton
+
+    deleteImageView.isHidden = !showingActions || !isInstalled
+    finderImageView.isHidden = !showingActions || !isInstalled
+    hfImageView.isHidden = !showingActions
 
     // Update icon state
     iconView.setLoading(isLoading)
@@ -211,8 +231,8 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
 
   override func highlightDidChange(_ highlighted: Bool) {
     // Reset delete button when mouse exits
-    if !highlighted && showingDeleteButton {
-      showingDeleteButton = false
+    if !highlighted && showingActions {
+      showingActions = false
       refresh()
     }
   }
@@ -222,5 +242,6 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     cancelImageView.contentTintColor = .systemRed
     finderImageView.contentTintColor = .tertiaryLabelColor
     deleteImageView.contentTintColor = .tertiaryLabelColor
+    hfImageView.contentTintColor = .tertiaryLabelColor
   }
 }
