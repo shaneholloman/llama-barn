@@ -4,7 +4,6 @@ final class SettingsSegmentedView: StandardItemView {
   private let segmentedControl: NSSegmentedControl
   private let onSelect: (Int) -> Void
   private let getSelectedIndex: () -> Int
-  private let infoIcon = NSImageView()
   private let infoText: String?
   private let mainStack = NSStackView()
 
@@ -23,7 +22,6 @@ final class SettingsSegmentedView: StandardItemView {
     iconView.isHidden = true
     titleLabel.stringValue = title
 
-    setupInfoView()
     configureSegmentedControl()
     setupLayout()
 
@@ -32,16 +30,6 @@ final class SettingsSegmentedView: StandardItemView {
   }
 
   required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-  private func setupInfoView() {
-    guard infoText != nil else { return }
-
-    Theme.configure(
-      infoIcon, symbol: "info.circle", tooltip: nil,
-      color: Theme.Colors.textSecondary)
-    infoIcon.addGestureRecognizer(
-      NSClickGestureRecognizer(target: self, action: #selector(toggleInfo)))
-  }
 
   private func configureSegmentedControl() {
     segmentedControl.target = self
@@ -59,7 +47,7 @@ final class SettingsSegmentedView: StandardItemView {
     // Configure mainStack
     mainStack.orientation = .vertical
     mainStack.alignment = .leading
-    mainStack.spacing = 0  // Initially 0 as subtitle is hidden
+    mainStack.spacing = 0
 
     // Add views
     mainStack.addArrangedSubview(rootStack)
@@ -72,23 +60,19 @@ final class SettingsSegmentedView: StandardItemView {
     // Ensure rootStack fills the width
     rootStack.widthAnchor.constraint(equalTo: mainStack.widthAnchor).isActive = true
 
-    // Configure subtitle initially
-    subtitleLabel.isHidden = true
+    // Configure subtitle
+    if let infoText = infoText {
+      configureSubtitle(infoText, width: 274)  // 300 - 10 - 16
+      subtitleLabel.textColor = Theme.Colors.textSecondary
+      subtitleLabel.isHidden = false
+      mainStack.spacing = Layout.textLineSpacing
+    } else {
+      subtitleLabel.isHidden = true
+    }
 
-    // Enforce minimum height on rootStack to prevent layout shift when toggling info
+    // Enforce minimum height on rootStack to prevent layout shift
     // 30 (min item height) - 8 (vertical padding) = 22
     rootStack.heightAnchor.constraint(greaterThanOrEqualToConstant: 22).isActive = true
-  }
-
-  override func makeTextStack() -> NSStackView {
-    if infoText != nil {
-      let titleStack = NSStackView(views: [titleLabel, infoIcon])
-      titleStack.orientation = .horizontal
-      titleStack.spacing = 4
-      titleStack.alignment = .centerY
-      return titleStack
-    }
-    return super.makeTextStack()
   }
 
   override var intrinsicContentSize: NSSize {
@@ -104,25 +88,6 @@ final class SettingsSegmentedView: StandardItemView {
 
   @objc private func segmentChanged() {
     onSelect(segmentedControl.selectedSegment)
-  }
-
-  @objc private func toggleInfo() {
-    guard let infoText = infoText else { return }
-
-    if subtitleLabel.isHidden {
-      // Show info
-      configureSubtitle(infoText, width: 274)  // 300 - 10 - 16
-      subtitleLabel.textColor = Theme.Colors.textSecondary
-      subtitleLabel.isHidden = false
-      mainStack.spacing = Layout.textLineSpacing
-    } else {
-      // Hide info
-      subtitleLabel.isHidden = true
-      mainStack.spacing = 0
-    }
-
-    invalidateIntrinsicContentSize()
-    enclosingMenuItem?.menu?.update()
   }
 
   override var highlightEnabled: Bool { false }
