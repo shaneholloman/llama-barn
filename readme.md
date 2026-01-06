@@ -4,7 +4,7 @@ LlamaBarn is a tiny menu bar app that makes running local LLMs as easy as connec
 
 <br>
 
-![LlamaBarn](https://github.com/user-attachments/assets/ec4237e4-3a7b-41b7-8506-445838f0519f)
+![LlamaBarn](https://github.com/user-attachments/assets/a3cc6916-9f3a-41e2-b2ad-11e8e13c73d4)
 
 <br>
 
@@ -54,6 +54,16 @@ LlamaBarn uses the llama.cpp server API. Example:
 curl http://localhost:2276/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "Hello"}]}'
+```
+
+```sh
+# info about the running model
+GET http://localhost:2276/v1/models
+```
+
+```sh
+# server and model configuration
+GET http://localhost:2276/props
 ```
 
 See complete reference in `llama-server` [docs ↗](https://github.com/ggml-org/llama.cpp/tree/master/tools/server#api-endpoints)
