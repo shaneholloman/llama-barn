@@ -57,7 +57,7 @@ final class MenuController: NSObject, NSMenuDelegate {
   private func configureStatusItem() {
     if let button = statusItem.button {
       button.image =
-        NSImage(named: server.isRunning ? "MenuIconOn" : "MenuIconOff")
+        NSImage(named: server.isAnyModelLoaded ? "MenuIconOn" : "MenuIconOff")
         ?? NSImage(systemSymbolName: "brain", accessibilityDescription: nil)
       button.image?.isTemplate = true
     }
@@ -181,7 +181,7 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   private func refresh() {
     if let button = statusItem.button {
-      let running = server.isRunning
+      let running = server.isAnyModelLoaded
       let imageName = running ? "MenuIconOn" : "MenuIconOff"
       if button.image?.name() != imageName {
         button.image = NSImage(named: imageName) ?? button.image

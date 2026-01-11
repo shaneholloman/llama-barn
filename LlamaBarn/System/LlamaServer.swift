@@ -229,6 +229,11 @@ class LlamaServer {
     state == .running
   }
 
+  /// Checks if any model is currently loaded or loading
+  var isAnyModelLoaded: Bool {
+    return modelStatuses.values.contains { $0 == "loaded" || $0 == "loading" }
+  }
+
   /// Checks if the server is currently loading
   var isLoading: Bool {
     state == .loading
