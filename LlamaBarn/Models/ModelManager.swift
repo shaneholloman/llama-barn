@@ -158,6 +158,15 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   func updatePresetsFile() {
     let presets = generatePresetsContent()
     let destinationURL = CatalogEntry.modelStorageDirectory.appendingPathComponent("models.ini")
+
+    // Check if content has actually changed to avoid unnecessary server reloads
+    if let existingData = try? Data(contentsOf: destinationURL),
+      let existingContent = String(data: existingData, encoding: .utf8),
+      existingContent == presets
+    {
+      return
+    }
+
     do {
       try presets.write(to: destinationURL, atomically: true, encoding: .utf8)
       logger.info("Updated presets file at \(destinationURL.path)")
