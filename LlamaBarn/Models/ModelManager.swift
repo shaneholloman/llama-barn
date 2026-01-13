@@ -31,6 +31,11 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   // Store resume data for failed downloads to allow resuming later
   private var resumeData: [URL: Data] = [:]
 
+  // Retry state: tracks attempt count per URL for exponential backoff
+  private var retryAttempts: [URL: Int] = [:]
+  private let maxRetryAttempts = 3
+  private let baseRetryDelay: TimeInterval = 2.0  // Doubles each attempt: 2s, 4s, 8s
+
   private var urlSession: URLSession!
   private let logger = Logger(subsystem: Logging.subsystem, category: "ModelManager")
 
@@ -274,6 +279,12 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
       cancelTasks(for: model.id)
       activeDownloads.removeValue(forKey: model.id)
       lastNotificationTime.removeValue(forKey: model.id)
+
+      // Clear retry state for all URLs associated with this model
+      for url in model.allDownloadUrls {
+        clearRetryState(for: url)
+        resumeData.removeValue(forKey: url)
+      }
     }
     NotificationCenter.default.post(name: .LBModelDownloadsDidChange, object: self)
   }
@@ -389,9 +400,10 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
       DispatchQueue.main.async { [weak self] in
         guard let self = self else { return }
 
-        // Clear resume data on success
+        // Clear resume and retry data on success
         if let originalURL = downloadTask.originalRequest?.url {
           self.resumeData.removeValue(forKey: originalURL)
+          self.clearRetryState(for: originalURL)
         }
 
         let wasCompleted = self.updateActiveDownload(modelId: modelId) { aggregate in
@@ -509,6 +521,13 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
           }
         }
 
+        // Check if we should retry (only for transient network errors)
+        if let originalURL, self.shouldRetry(error: nsError, url: originalURL) {
+          self.scheduleRetry(url: originalURL, modelId: modelId, resumeData: resumeData)
+          return
+        }
+
+        // No retry — fail the download
         if self.activeDownloads[modelId] != nil {
           _ = self.updateActiveDownload(modelId: modelId) { aggregate in
             aggregate.removeTask(with: task.taskIdentifier)
@@ -523,8 +542,71 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
             )
           }
         }
+
+        // Clear retry state on final failure
+        if let originalURL {
+          self.retryAttempts.removeValue(forKey: originalURL)
+        }
       }
     }
+  }
+
+  // MARK: - Retry Logic
+
+  /// Determines if a failed download should be retried based on error type and attempt count.
+  private func shouldRetry(error: NSError, url: URL) -> Bool {
+    let attempts = retryAttempts[url] ?? 0
+    guard attempts < maxRetryAttempts else { return false }
+
+    // Only retry transient network errors
+    let retryableCodes = [
+      NSURLErrorTimedOut,
+      NSURLErrorNetworkConnectionLost,
+      NSURLErrorNotConnectedToInternet,
+      NSURLErrorCannotConnectToHost,
+      NSURLErrorDNSLookupFailed,
+    ]
+
+    return retryableCodes.contains(error.code)
+  }
+
+  /// Schedules a retry with exponential backoff.
+  private func scheduleRetry(url: URL, modelId: String, resumeData: Data?) {
+    let attempts = retryAttempts[url] ?? 0
+    retryAttempts[url] = attempts + 1
+
+    // Exponential backoff: 2s, 4s, 8s
+    let delay = baseRetryDelay * pow(2.0, Double(attempts))
+
+    logger.info(
+      "Scheduling retry \(attempts + 1)/\(self.maxRetryAttempts) for \(url.lastPathComponent) in \(delay)s"
+    )
+
+    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+      guard let self = self else { return }
+
+      // Verify download is still active (user may have cancelled)
+      guard self.activeDownloads[modelId] != nil else {
+        self.retryAttempts.removeValue(forKey: url)
+        return
+      }
+
+      let task: URLSessionDownloadTask
+      if let resumeData {
+        task = self.urlSession.downloadTask(withResumeData: resumeData)
+      } else {
+        task = self.urlSession.downloadTask(with: url)
+      }
+      task.taskDescription = modelId
+      task.resume()
+
+      self.logger.info("Retrying download for \(url.lastPathComponent)")
+    }
+  }
+
+  /// Clears retry state for a URL (called on success or user cancellation).
+  private func clearRetryState(for url: URL) {
+    retryAttempts.removeValue(forKey: url)
   }
 
   // MARK: - Helpers

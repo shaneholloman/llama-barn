@@ -138,6 +138,18 @@ struct CatalogEntry: Identifiable {
     return paths
   }
 
+  /// All remote URLs this model requires (main file + additional parts + mmproj)
+  var allDownloadUrls: [URL] {
+    var urls = [downloadUrl]
+    if let additional = additionalParts {
+      urls.append(contentsOf: additional)
+    }
+    if let mmproj = mmprojUrl {
+      urls.append(mmproj)
+    }
+    return urls
+  }
+
   /// The directory where AI models are stored, creating it if necessary
   static let modelStorageDirectory: URL = {
     let homeDirectory = FileManager.default.homeDirectoryForCurrentUser

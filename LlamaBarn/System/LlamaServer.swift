@@ -34,6 +34,7 @@ class LlamaServer {
   private var activeProcess: Process?
   private var healthCheckTask: Task<Void, Error>?
   private let logger = Logger(subsystem: Logging.subsystem, category: "LlamaServer")
+  private let api = LlamaServerAPI()
 
   enum ServerState: Equatable {
     case idle
@@ -283,15 +284,7 @@ class LlamaServer {
     }
 
     Task {
-      guard let url = URL(string: "http://localhost:\(Self.defaultPort)/models/load") else {
-        return
-      }
-      var request = URLRequest(url: url)
-      request.httpMethod = "POST"
-      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-      let body = ["model": model.id]
-      request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-      _ = try? await URLSession.shared.data(for: request)
+      _ = await api.loadModel(id: model.id)
     }
 
     // In Router Mode, the model is loaded via the /models/load endpoint.
@@ -303,7 +296,7 @@ class LlamaServer {
   /// Deselects the current model in the UI.
   func unloadModel(_ model: CatalogEntry) {
     Task {
-      _ = await unloadModel(byId: model.id)
+      _ = await api.unloadModel(id: model.id)
     }
 
     if activeModelPath == model.modelFilePath {
@@ -313,25 +306,6 @@ class LlamaServer {
 
   func unloadModel() {
     activeModelPath = nil
-  }
-
-  /// Sends a request to unload a specific model by ID
-  private func unloadModel(byId modelId: String) async -> Bool {
-    guard let url = URL(string: "http://localhost:\(Self.defaultPort)/models/unload") else {
-      return false
-    }
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    let body = ["model": modelId]
-    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-    do {
-      let (_, response) = try await URLSession.shared.data(for: request)
-      return (response as? HTTPURLResponse)?.statusCode == 200
-    } catch {
-      return false
-    }
   }
 
   private func cleanUpPipes() {
@@ -349,7 +323,7 @@ class LlamaServer {
     healthCheckTask = Task {
       // Poll /models to detect status.
       while !Task.isCancelled {
-        await checkStatus(port: port)
+        await checkStatus()
         try? await Task.sleep(nanoseconds: 1_000_000_000)
       }
     }
@@ -360,94 +334,35 @@ class LlamaServer {
     healthCheckTask = nil
   }
 
-  private struct ModelsResponse: Decodable {
-    struct ModelData: Decodable {
-      let id: String
-      let status: ModelStatus?
-    }
-    struct ModelStatus: Decodable {
-      let value: String
-    }
-    let data: [ModelData]
-  }
+  private func checkStatus() async {
+    guard let newStatuses = await api.fetchModelStatuses() else { return }
 
-  private struct PropsResponse: Decodable {
-    let is_sleeping: Bool?
-    let default_generation_settings: DefaultGenerationSettings?
-
-    struct DefaultGenerationSettings: Decodable {
-      let is_sleeping: Bool?
-    }
-  }
-
-  private func checkStatus(port: Int) async {
-    guard let url = URL(string: "http://localhost:\(port)/models") else { return }
-
-    do {
-      var request = URLRequest(url: url)
-      request.timeoutInterval = 2.0
-
-      let (data, response) = try await URLSession.shared.data(for: request)
-
-      if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-        if let decoded = try? JSONDecoder().decode(ModelsResponse.self, from: data) {
-          let newStatuses = decoded.data.reduce(into: [String: String]()) { dict, item in
-            dict[item.id] = item.status?.value ?? "unloaded"
-          }
-
-          // Check for sleeping models if any model is loaded
-          // We look for 'loaded' status, and if found, query /props for that model
-          // Since --models-max 1 ensures single model, checking the first loaded one is sufficient
-          if let loadedModelId = newStatuses.first(where: { $0.value == "loaded" })?.key {
-            // Only check if enabled
-            if UserSettings.sleepIdleTime != .disabled {
-              await checkSleepingStatus(port: port, modelId: loadedModelId)
-            }
-          }
-
+    // Check for sleeping models if any model is loaded.
+    // We look for 'loaded' status, and if found, query /props for that model.
+    // Since --models-max 1 ensures single model, checking the first loaded one is sufficient.
+    if let loadedModelId = newStatuses.first(where: { $0.value == "loaded" })?.key {
+      if UserSettings.sleepIdleTime != .disabled {
+        let isSleeping = await api.isModelSleeping(id: loadedModelId)
+        if isSleeping {
+          _ = await api.unloadModel(id: loadedModelId)
           await MainActor.run {
-            if self.state == .loading {
-              self.state = .running
-              self.startMemoryMonitoring()
-            }
-            if self.modelStatuses != newStatuses {
-              self.modelStatuses = newStatuses
+            if self.activeModelPath != nil {
+              self.activeModelPath = nil
             }
           }
         }
       }
-    } catch {}
-  }
+    }
 
-  private func checkSleepingStatus(port: Int, modelId: String) async {
-    // Construct URL with query parameter ?model={modelId}// Construct URL w/ query parameter ?model={modelId}
-    guard var components = URLComponents(string: "http://localhost:\(port)/props") else { return }
-    components.queryItems = [URLQueryItem(name: "model", value: modelId)]
-
-    guard let url = components.url else { return }
-
-    do {
-      var request = URLRequest(url: url)
-      request.timeoutInterval = 1.0  // Short timeout for props check
-
-      let (data, response) = try await URLSession.shared.data(for: request)
-
-      if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-        if let decoded = try? JSONDecoder().decode(PropsResponse.self, from: data) {
-          let isSleeping =
-            decoded.is_sleeping ?? decoded.default_generation_settings?.is_sleeping ?? false
-
-          if isSleeping {
-            _ = await unloadModel(byId: modelId)
-            await MainActor.run {
-              if self.activeModelPath != nil {
-                self.activeModelPath = nil
-              }
-            }
-          }
-        }
+    await MainActor.run {
+      if self.state == .loading {
+        self.state = .running
+        self.startMemoryMonitoring()
       }
-    } catch {}
+      if self.modelStatuses != newStatuses {
+        self.modelStatuses = newStatuses
+      }
+    }
   }
 
   private func startMemoryMonitoring() {
