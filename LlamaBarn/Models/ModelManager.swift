@@ -122,7 +122,7 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
     // Optimistically update state immediately for responsive UI
     downloadedModels.removeAll { $0.id == model.id }
-    updatePresetsFile()
+    updateModelsFile()
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
 
     // Move file deletion to background queue to avoid blocking main thread
@@ -148,36 +148,36 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
     let manager = ModelManager.shared
     manager.downloadedModels.append(model)
     manager.downloadedModels.sort(by: CatalogEntry.displayOrder(_:_:))
-    manager.updatePresetsFile()
+    manager.updateModelsFile()
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
     logger.error("Failed to delete model: \(error.localizedDescription)")
   }
 
   /// Updates the `models.ini` file required for using llama-server in Router Mode.
   /// This file lists all installed models and their configuration parameters.
-  func updatePresetsFile() {
-    let presets = generatePresetsContent()
+  func updateModelsFile() {
+    let content = generateModelsFileContent()
     let destinationURL = CatalogEntry.modelStorageDirectory.appendingPathComponent("models.ini")
 
     // Check if content has actually changed to avoid unnecessary server reloads
     if let existingData = try? Data(contentsOf: destinationURL),
       let existingContent = String(data: existingData, encoding: .utf8),
-      existingContent == presets
+      existingContent == content
     {
       return
     }
 
     do {
-      try presets.write(to: destinationURL, atomically: true, encoding: .utf8)
-      logger.info("Updated presets file at \(destinationURL.path)")
+      try content.write(to: destinationURL, atomically: true, encoding: .utf8)
+      logger.info("Updated models.ini at \(destinationURL.path)")
       // Notify server to pick up configuration changes
       LlamaServer.shared.reload()
     } catch {
-      logger.error("Failed to write presets file: \(error)")
+      logger.error("Failed to write models.ini: \(error)")
     }
   }
 
-  private func generatePresetsContent() -> String {
+  private func generateModelsFileContent() -> String {
     var content = ""
     for model in downloadedModels {
       content += "[\(model.id)]\n"
@@ -264,7 +264,7 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   private static func updateDownloadedModels(_ models: [CatalogEntry]) {
     let manager = ModelManager.shared
     manager.downloadedModels = models.sorted(by: CatalogEntry.displayOrder(_:_:))
-    manager.updatePresetsFile()
+    manager.updateModelsFile()
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
   }
 
