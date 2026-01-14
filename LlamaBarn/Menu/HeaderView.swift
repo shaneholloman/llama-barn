@@ -9,7 +9,7 @@ final class HeaderView: ItemView {
   private let statusStackView = NSStackView()
   private let statusLabel = Theme.secondaryLabel()
   private let linkLabel = Theme.secondaryLabel()
-  private let copyImageView = NSImageView()
+  private let copyButton = NSButton()
   private let webUiLabel = Theme.secondaryLabel()
 
   private var currentUrl: URL?
@@ -51,16 +51,10 @@ final class HeaderView: ItemView {
     // Link Label Configuration
     linkLabel.isSelectable = false  // Make it look like a label, not editable
 
-    // Copy Image View Configuration
-    copyImageView.image = NSImage(
-      systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy URL")
-    copyImageView.toolTip = "Copy URL"
-    copyImageView.contentTintColor = Theme.Colors.textSecondary
-    copyImageView.symbolConfiguration = .init(pointSize: 11, weight: .regular)
-    copyImageView.setContentHuggingPriority(.init(251), for: .horizontal)
-
-    let copyClick = NSClickGestureRecognizer(target: self, action: #selector(copyUrl))
-    copyImageView.addGestureRecognizer(copyClick)
+    // Copy Button Configuration
+    Theme.configure(copyButton, symbol: "doc.on.doc", tooltip: "Copy URL", pointSize: 11)
+    copyButton.target = self
+    copyButton.action = #selector(copyUrl)
 
     // WebUI Label Configuration
     let webUiClick = NSClickGestureRecognizer(target: self, action: #selector(openWebUi))
@@ -70,7 +64,7 @@ final class HeaderView: ItemView {
     statusStackView.addArrangedSubview(statusLabel)
     statusStackView.addArrangedSubview(linkLabel)
     statusStackView.addArrangedSubview(NSView.spacer(width: 4))
-    statusStackView.addArrangedSubview(copyImageView)
+    statusStackView.addArrangedSubview(copyButton)
     statusStackView.addArrangedSubview(NSView.spacer(width: 8))
     statusStackView.addArrangedSubview(NSView.flexibleSpacer())
     statusStackView.addArrangedSubview(webUiLabel)
@@ -107,7 +101,7 @@ final class HeaderView: ItemView {
     )
     linkLabel.attributedStringValue = attrTitle
     linkLabel.isHidden = false
-    copyImageView.isHidden = false
+    copyButton.isHidden = false
     webUiLabel.isHidden = false
 
     let attrWebUi = NSAttributedString(
@@ -121,7 +115,7 @@ final class HeaderView: ItemView {
 
     // Update copy icon based on confirmation state
     let iconName = showingCopyConfirmation ? "checkmark" : "doc.on.doc"
-    copyImageView.image = NSImage(
+    copyButton.image = NSImage(
       systemSymbolName: iconName, accessibilityDescription: "Copy URL")
 
     needsDisplay = true
