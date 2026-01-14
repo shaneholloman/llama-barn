@@ -22,10 +22,10 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     return label
   }()
   private let cancelImageView = NSImageView()
-  private let finderImageView = NSImageView()
-  private let deleteImageView = NSImageView()
-  private let hfImageView = NSImageView()
-  private let copyIdImageView = NSImageView()
+  private let finderButton = NSButton()
+  private let deleteButton = NSButton()
+  private let hfButton = NSButton()
+  private let copyIdButton = NSButton()
 
   // Hover handling is provided by MenuItemView
   private var showingActions = false
@@ -47,31 +47,40 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     progressLabel.alignment = .right
 
     Theme.configure(cancelImageView, symbol: "xmark", color: .systemRed)
-    Theme.configure(finderImageView, symbol: "folder", tooltip: "Show in Finder")
-    Theme.configure(deleteImageView, symbol: "trash", tooltip: "Delete model")
-    Theme.configure(hfImageView, symbol: "globe", tooltip: "Open on Hugging Face")
-    Theme.configure(copyIdImageView, symbol: "doc.on.doc", tooltip: "Copy model ID")
+    Theme.configure(finderButton, symbol: "folder", tooltip: "Show in Finder")
+    Theme.configure(deleteButton, symbol: "trash", tooltip: "Delete model")
+    Theme.configure(hfButton, symbol: "globe", tooltip: "Open on Hugging Face")
+    Theme.configure(copyIdButton, symbol: "doc.on.doc", tooltip: "Copy model ID")
+
+    finderButton.target = self
+    finderButton.action = #selector(didClickFinder)
+    deleteButton.target = self
+    deleteButton.action = #selector(didClickDelete)
+    hfButton.target = self
+    hfButton.action = #selector(didClickHF)
+    copyIdButton.target = self
+    copyIdButton.action = #selector(didClickCopyId)
 
     // Start hidden
     cancelImageView.isHidden = true
-    finderImageView.isHidden = true
-    deleteImageView.isHidden = true
-    hfImageView.isHidden = true
-    copyIdImageView.isHidden = true
+    finderButton.isHidden = true
+    deleteButton.isHidden = true
+    hfButton.isHidden = true
+    copyIdButton.isHidden = true
     progressLabel.isHidden = true
 
     accessoryStack.addArrangedSubview(progressLabel)
     accessoryStack.addArrangedSubview(cancelImageView)
-    accessoryStack.addArrangedSubview(copyIdImageView)
-    accessoryStack.addArrangedSubview(hfImageView)
-    accessoryStack.addArrangedSubview(finderImageView)
-    accessoryStack.addArrangedSubview(deleteImageView)
+    accessoryStack.addArrangedSubview(copyIdButton)
+    accessoryStack.addArrangedSubview(hfButton)
+    accessoryStack.addArrangedSubview(finderButton)
+    accessoryStack.addArrangedSubview(deleteButton)
 
     Layout.constrainToIconSize(cancelImageView)
-    Layout.constrainToIconSize(finderImageView)
-    Layout.constrainToIconSize(deleteImageView)
-    Layout.constrainToIconSize(hfImageView)
-    Layout.constrainToIconSize(copyIdImageView)
+    Layout.constrainToIconSize(finderButton)
+    Layout.constrainToIconSize(deleteButton)
+    Layout.constrainToIconSize(hfButton)
+    Layout.constrainToIconSize(copyIdButton)
     progressLabel.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.progressWidth).isActive =
       true
 
@@ -81,12 +90,12 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     progressLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
     cancelImageView.setContentHuggingPriority(.required, for: .horizontal)
     cancelImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-    finderImageView.setContentHuggingPriority(.required, for: .horizontal)
-    finderImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-    hfImageView.setContentHuggingPriority(.required, for: .horizontal)
-    hfImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-    copyIdImageView.setContentHuggingPriority(.required, for: .horizontal)
-    copyIdImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
+    finderButton.setContentHuggingPriority(.required, for: .horizontal)
+    finderButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+    hfButton.setContentHuggingPriority(.required, for: .horizontal)
+    hfButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+    copyIdButton.setContentHuggingPriority(.required, for: .horizontal)
+    copyIdButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
     setupGestures()
     refresh()
@@ -100,10 +109,6 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     let rowClickRecognizer = addGesture(action: #selector(didClickRow))
     rowClickRecognizer.delegate = self
 
-    addGesture(to: deleteImageView, action: #selector(didClickDelete))
-    addGesture(to: finderImageView, action: #selector(didClickFinder))
-    addGesture(to: hfImageView, action: #selector(didClickHF))
-    addGesture(to: copyIdImageView, action: #selector(didClickCopyId))
     addGesture(action: #selector(didRightClick), buttonMask: 0x2)
   }
 
@@ -153,7 +158,7 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     _ gestureRecognizer: NSGestureRecognizer, shouldAttemptToRecognizeWith event: NSEvent
   ) -> Bool {
     let loc = event.locationInWindow
-    let actionButtons = [deleteImageView, finderImageView, hfImageView, copyIdImageView]
+    let actionButtons = [deleteButton, finderButton, hfButton, copyIdButton]
     return !actionButtons.contains { view in
       !view.isHidden && view.bounds.contains(view.convert(loc, from: nil))
     }
@@ -212,14 +217,14 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
       // But we need to make sure delete/finder are hidden.
     }
 
-    deleteImageView.isHidden = !showingActions || !isInstalled
-    finderImageView.isHidden = !showingActions || !isInstalled
-    hfImageView.isHidden = !showingActions
-    copyIdImageView.isHidden = !showingActions || !isInstalled
+    deleteButton.isHidden = !showingActions || !isInstalled
+    finderButton.isHidden = !showingActions || !isInstalled
+    hfButton.isHidden = !showingActions
+    copyIdButton.isHidden = !showingActions || !isInstalled
 
     // Update copy icon based on confirmation state
     let copyIconName = showingCopyConfirmation ? "checkmark" : "doc.on.doc"
-    copyIdImageView.image = NSImage(
+    copyIdButton.image = NSImage(
       systemSymbolName: copyIconName, accessibilityDescription: "Copy model ID")
 
     // Update icon state
@@ -248,9 +253,9 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
   override func viewDidChangeEffectiveAppearance() {
     super.viewDidChangeEffectiveAppearance()
     cancelImageView.contentTintColor = .systemRed
-    finderImageView.contentTintColor = .tertiaryLabelColor
-    deleteImageView.contentTintColor = .tertiaryLabelColor
-    hfImageView.contentTintColor = .tertiaryLabelColor
-    copyIdImageView.contentTintColor = .tertiaryLabelColor
+    finderButton.contentTintColor = .tertiaryLabelColor
+    deleteButton.contentTintColor = .tertiaryLabelColor
+    hfButton.contentTintColor = .tertiaryLabelColor
+    copyIdButton.contentTintColor = .tertiaryLabelColor
   }
 }
