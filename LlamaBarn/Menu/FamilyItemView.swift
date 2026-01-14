@@ -1,7 +1,7 @@
 import AppKit
 
 /// Interactive item for catalog families.
-final class FamilyItemView: StandardItemView {
+final class FamilyItemView: ItemView {
   let family: String
   private let onAction: ((String) -> Void)?
   private let chevronView = NSImageView()
@@ -21,16 +21,14 @@ final class FamilyItemView: StandardItemView {
     self.linkUrl = linkUrl
     super.init(frame: .zero)
 
-    // Configure StandardItemView elements
-    iconView.isHidden = true
-
-    // Title
-    titleLabel.font = Theme.Fonts.secondary
+    // Title label
+    let titleLabel = Theme.secondaryLabel()
     titleLabel.textColor = Theme.Colors.textPrimary
     titleLabel.attributedStringValue = Format.familyItem(name: family, sizes: sizes)
     titleLabel.lineBreakMode = .byTruncatingTail
 
-    // Link (optional, shown inline after title)
+    // Build title row (title + optional link)
+    let titleRow: NSView
     if let linkText = linkText, linkUrl != nil {
       let attrLink = NSAttributedString(
         string: linkText,
@@ -44,44 +42,50 @@ final class FamilyItemView: StandardItemView {
       let linkClick = NSClickGestureRecognizer(target: self, action: #selector(openLink))
       linkLabel.addGestureRecognizer(linkClick)
 
-      // Insert link label right after title in the title's superview (the text stack)
-      if let textStack = titleLabel.superview as? NSStackView {
-        // Remove title, create horizontal stack with title + link, insert back
-        textStack.removeArrangedSubview(titleLabel)
-        titleLabel.removeFromSuperview()
-
-        let titleRow = NSStackView(views: [titleLabel, linkLabel])
-        titleRow.orientation = .horizontal
-        titleRow.spacing = 6
-        titleRow.alignment = .firstBaseline
-
-        textStack.insertArrangedSubview(titleRow, at: 0)
-      }
+      let row = NSStackView(views: [titleLabel, linkLabel])
+      row.orientation = .horizontal
+      row.spacing = 6
+      row.alignment = .firstBaseline
+      titleRow = row
+    } else {
+      titleRow = titleLabel
     }
 
-    // Subtitle (Description)
+    // Subtitle (description)
+    let subtitleLabel = Theme.secondaryLabel()
     subtitleLabel.textColor = Theme.Colors.textSecondary
 
-    // Content width minus chevron (10) and spacing (6)
-    configureSubtitle(description, width: Layout.contentWidth - 16)
+    // Text column
+    let textColumn = NSStackView(views: [titleRow])
+    textColumn.orientation = .vertical
+    textColumn.alignment = .leading
+    textColumn.spacing = Layout.textLineSpacing
 
-    if description != nil {
+    if let description {
+      subtitleLabel.stringValue = description
       subtitleLabel.maximumNumberOfLines = 1
       subtitleLabel.lineBreakMode = .byTruncatingTail
       subtitleLabel.cell?.truncatesLastVisibleLine = true
       subtitleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+      textColumn.addArrangedSubview(subtitleLabel)
     }
 
     // Chevron
-    Theme.configure(
-      chevronView,
-      symbol: "chevron.right",
-      color: .tertiaryLabelColor,
-      pointSize: 10
-    )
+    Theme.configure(chevronView, symbol: "chevron.right", color: .tertiaryLabelColor, pointSize: 10)
     chevronView.isHidden = onAction == nil
 
-    accessoryStack.addArrangedSubview(chevronView)
+    // Spacer
+    let spacer = NSView()
+    spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+    // Root stack
+    let rootStack = NSStackView(views: [textColumn, spacer, chevronView])
+    rootStack.orientation = .horizontal
+    rootStack.alignment = .centerY
+    rootStack.spacing = 6
+
+    contentView.addSubview(rootStack)
+    rootStack.pinToSuperview()
 
     // Accessibility
     if onAction != nil {

@@ -114,9 +114,7 @@ final class HeaderView: ItemView {
     webUiLabel.attributedStringValue = attrWebUi
 
     // Update copy icon based on confirmation state
-    let iconName = showingCopyConfirmation ? "checkmark" : "doc.on.doc"
-    copyButton.image = NSImage(
-      systemSymbolName: iconName, accessibilityDescription: "Copy URL")
+    Theme.updateCopyIcon(copyButton, showingConfirmation: showingCopyConfirmation)
 
     needsDisplay = true
   }
@@ -137,7 +135,6 @@ final class HeaderView: ItemView {
       showingCopyConfirmation = true
       refresh()
 
-      // Revert to copy icon after 1 second
       DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
         self?.showingCopyConfirmation = false
         self?.refresh()

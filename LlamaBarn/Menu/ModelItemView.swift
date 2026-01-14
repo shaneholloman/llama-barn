@@ -8,28 +8,33 @@ import Foundation
 /// - Installed: rounded square icon (inactive) + label
 /// - Loading: rounded square icon (active)
 /// - Running: rounded square icon (active)
-final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
+final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
   private let model: CatalogEntry
   private unowned let server: LlamaServer
   private unowned let modelManager: ModelManager
   private let actionHandler: ModelActionHandler
   private let isInCatalog: Bool
 
-  // Subviews
+  // Labels
+  private let titleLabel = Theme.primaryLabel()
+  private let subtitleLabel = Theme.secondaryLabel()
   private let progressLabel: NSTextField = {
     let label = Theme.secondaryLabel()
     label.font = Theme.Fonts.primary
+    label.alignment = .right
     return label
   }()
+
+  // Icon and action buttons
+  private let iconView = IconView()
   private let cancelImageView = NSImageView()
   private let finderButton = NSButton()
   private let deleteButton = NSButton()
   private let hfButton = NSButton()
   private let copyIdButton = NSButton()
 
-  // Hover handling is provided by MenuItemView
+  // State
   private var showingActions = false
-  // Tracks whether we're showing the copy confirmation checkmark
   private var showingCopyConfirmation = false
 
   init(
@@ -44,8 +49,8 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     super.init(frame: .zero)
 
     iconView.imageView.image = NSImage(named: model.icon)
-    progressLabel.alignment = .right
 
+    // Configure action buttons
     Theme.configure(cancelImageView, symbol: "xmark", color: .systemRed)
     Theme.configure(finderButton, symbol: "folder", tooltip: "Show in Finder")
     Theme.configure(deleteButton, symbol: "trash", tooltip: "Delete model")
@@ -69,13 +74,51 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     copyIdButton.isHidden = true
     progressLabel.isHidden = true
 
-    accessoryStack.addArrangedSubview(progressLabel)
-    accessoryStack.addArrangedSubview(cancelImageView)
-    accessoryStack.addArrangedSubview(copyIdButton)
-    accessoryStack.addArrangedSubview(hfButton)
-    accessoryStack.addArrangedSubview(finderButton)
-    accessoryStack.addArrangedSubview(deleteButton)
+    setupLayout()
+    setupGestures()
+    refresh()
+  }
 
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  override var intrinsicContentSize: NSSize { NSSize(width: Layout.menuWidth, height: 40) }
+
+  private func setupLayout() {
+    // Text column
+    let textColumn = NSStackView(views: [titleLabel, subtitleLabel])
+    textColumn.orientation = .vertical
+    textColumn.alignment = .leading
+    textColumn.spacing = Layout.textLineSpacing
+
+    // Leading: Icon + Text
+    let leading = NSStackView(views: [iconView, textColumn])
+    leading.orientation = .horizontal
+    leading.alignment = .centerY
+    leading.spacing = 6
+
+    // Spacer
+    let spacer = NSView()
+    spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+    // Accessory stack
+    let accessoryStack = NSStackView(views: [
+      progressLabel, cancelImageView, copyIdButton, hfButton, finderButton, deleteButton,
+    ])
+    accessoryStack.orientation = .horizontal
+    accessoryStack.alignment = .centerY
+    accessoryStack.spacing = 6
+
+    // Root stack
+    let rootStack = NSStackView(views: [leading, spacer, accessoryStack])
+    rootStack.orientation = .horizontal
+    rootStack.alignment = .centerY
+    rootStack.spacing = 6
+
+    contentView.addSubview(rootStack)
+    rootStack.pinToSuperview()
+
+    // Constraints
     Layout.constrainToIconSize(cancelImageView)
     Layout.constrainToIconSize(finderButton)
     Layout.constrainToIconSize(deleteButton)
@@ -96,14 +139,7 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     hfButton.setContentCompressionResistancePriority(.required, for: .horizontal)
     copyIdButton.setContentHuggingPriority(.required, for: .horizontal)
     copyIdButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-    setupGestures()
-    refresh()
   }
-
-  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
-  override var intrinsicContentSize: NSSize { NSSize(width: Layout.menuWidth, height: 40) }
 
   private func setupGestures() {
     let rowClickRecognizer = addGesture(action: #selector(didClickRow))
@@ -141,7 +177,6 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
     showingCopyConfirmation = true
     refresh()
 
-    // Revert to copy icon after 1 second
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
       self?.showingCopyConfirmation = false
       self?.refresh()
@@ -211,21 +246,13 @@ final class ModelItemView: StandardItemView, NSGestureRecognizerDelegate {
       isCompatible ? Theme.Colors.modelIconTint : Theme.Colors.textSecondary
 
     // Delete and finder buttons only for installed models on right-click
-    // Reset showingActions if model is no longer installed
-    if !isInstalled && showingActions {
-      // If not installed, we still might want to show HF button, so don't reset showingActions
-      // But we need to make sure delete/finder are hidden.
-    }
-
     deleteButton.isHidden = !showingActions || !isInstalled
     finderButton.isHidden = !showingActions || !isInstalled
     hfButton.isHidden = !showingActions
     copyIdButton.isHidden = !showingActions || !isInstalled
 
     // Update copy icon based on confirmation state
-    let copyIconName = showingCopyConfirmation ? "checkmark" : "doc.on.doc"
-    copyIdButton.image = NSImage(
-      systemSymbolName: copyIconName, accessibilityDescription: "Copy model ID")
+    Theme.updateCopyIcon(copyIdButton, showingConfirmation: showingCopyConfirmation)
 
     // Update icon state
     iconView.setLoading(isLoading)

@@ -282,7 +282,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     menu.addItem(NSMenuItem.viewItem(with: titleView))
 
     if let description = family.description {
-      let descriptionView = DescriptionItemView(text: description)
+      let descriptionView = TextItemView(text: description, style: .description)
       menu.addItem(NSMenuItem.viewItem(with: descriptionView))
     }
 
@@ -406,7 +406,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     }()
 
     return NSMenuItem.viewItem(
-      with: SettingsSegmentedView(
+      with: SettingsItemView(
         title: "Context length",
         infoText: infoText,
         labels: contextWindowLabels,
@@ -426,7 +426,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     let labels = UserSettings.SleepIdleTime.allCases.map { $0.displayName }
 
     return NSMenuItem.viewItem(
-      with: SettingsSegmentedView(
+      with: SettingsItemView(
         title: "Unload when idle",
         infoText: "Automatically unloads the model from memory when not in use.",
         labels: labels,

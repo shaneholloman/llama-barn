@@ -152,6 +152,19 @@ extension Theme {
   }
 }
 
+// MARK: - Copy Confirmation Helper
+
+extension Theme {
+  /// Updates a copy button's icon based on confirmation state.
+  /// - Parameters:
+  ///   - button: The button to update
+  ///   - showingConfirmation: Whether to show checkmark or copy icon
+  static func updateCopyIcon(_ button: NSButton, showingConfirmation: Bool) {
+    let iconName = showingConfirmation ? "checkmark" : "doc.on.doc"
+    button.image = NSImage(systemSymbolName: iconName, accessibilityDescription: "Copy")
+  }
+}
+
 // MARK: - Helpers
 
 // Creates colors that automatically adapt to light/dark mode
