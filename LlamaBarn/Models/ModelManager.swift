@@ -127,7 +127,9 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
     // Optimistically update state immediately for responsive UI
     downloadedModels.removeAll { $0.id == model.id }
-    updateModelsFile()
+    if updateModelsFile() {
+      LlamaServer.shared.reload()
+    }
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: self)
 
     // Move file deletion to background queue to avoid blocking main thread
@@ -153,32 +155,35 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
     let manager = ModelManager.shared
     manager.downloadedModels.append(model)
     manager.downloadedModels.sort(by: CatalogEntry.displayOrder(_:_:))
-    manager.updateModelsFile()
+    if manager.updateModelsFile() {
+      LlamaServer.shared.reload()
+    }
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
     logger.error("Failed to delete model: \(error.localizedDescription)")
   }
 
   /// Updates the `models.ini` file required for using llama-server in Router Mode.
-  /// This file lists all installed models and their configuration parameters.
-  func updateModelsFile() {
+  /// Returns true if the file was changed, false if content was identical.
+  @discardableResult
+  func updateModelsFile() -> Bool {
     let content = generateModelsFileContent()
     let destinationURL = CatalogEntry.modelStorageDirectory.appendingPathComponent("models.ini")
 
-    // Check if content has actually changed to avoid unnecessary server reloads
+    // Skip write if content is identical
     if let existingData = try? Data(contentsOf: destinationURL),
       let existingContent = String(data: existingData, encoding: .utf8),
       existingContent == content
     {
-      return
+      return false
     }
 
     do {
       try content.write(to: destinationURL, atomically: true, encoding: .utf8)
       logger.info("Updated models.ini at \(destinationURL.path)")
-      // Notify server to pick up configuration changes
-      LlamaServer.shared.reload()
+      return true
     } catch {
       logger.error("Failed to write models.ini: \(error)")
+      return false
     }
   }
 
@@ -269,7 +274,12 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
   private static func updateDownloadedModels(_ models: [CatalogEntry]) {
     let manager = ModelManager.shared
     manager.downloadedModels = models.sorted(by: CatalogEntry.displayOrder(_:_:))
-    manager.updateModelsFile()
+
+    // Only reload server if models.ini actually changed
+    if manager.updateModelsFile() {
+      LlamaServer.shared.reload()
+    }
+
     NotificationCenter.default.post(name: .LBModelDownloadedListDidChange, object: manager)
   }
 
