@@ -137,6 +137,7 @@ class LlamaServer {
       "--models-max", "1",
       "--log-file", "/tmp/llama-server.log",
       "--jinja",
+      "--fit-target", String(Int(CatalogEntry.memOverheadMb)),
     ]
 
     // Bind to 0.0.0.0 if exposeToNetwork is enabled

@@ -10,8 +10,16 @@ extension CatalogEntry {
   /// Models must support at least this context length to launch.
   static let minimumCtxWindowTokens: Double = compatibilityCtxWindowTokens
 
-  static func availableMemoryFraction(forSystemMemoryMb systemMemoryMb: UInt64) -> Double {
-    return systemMemoryMb >= 128 * 1024 ? 0.75 : 0.5
+  /// Memory overhead reserved for macOS and other apps (in MB).
+  /// This margin is also passed to llama-server via --fit-target so both
+  /// LlamaBarn's predictions and llama-server's runtime checks use the same value.
+  static let memOverheadMb: Double = 2048
+
+  /// Calculates available memory budget in MB based on system memory.
+  /// Formula: totalRAM * 0.75 - overhead
+  static func memoryBudget(systemMemoryMb: UInt64) -> Double {
+    let totalMb = Double(systemMemoryMb)
+    return max(totalMb * 0.75 - memOverheadMb, 0)
   }
 
   func usableCtxWindow(
@@ -95,12 +103,6 @@ extension CatalogEntry {
     return fileSizeMb * overheadMultiplier
   }
 
-  /// Calculates available memory budget in MB based on system memory
-  static func memoryBudget(systemMemoryMb: UInt64) -> Double {
-    let memoryFraction = availableMemoryFraction(forSystemMemoryMb: systemMemoryMb)
-    return Double(systemMemoryMb) * memoryFraction
-  }
-
   /// Computes compatibility info for a model
   private func compatibilityInfo(
     ctxWindowTokens: Double = compatibilityCtxWindowTokens
@@ -123,9 +125,11 @@ extension CatalogEntry {
       ctxWindowTokens: ctxWindowTokens)
 
     func memoryRequirementSummary() -> String {
-      let memoryFraction = Self.availableMemoryFraction(forSystemMemoryMb: sysMem)
-      let requiredTotalMb = UInt64(ceil(Double(estimatedMemoryUsageMb) / memoryFraction))
-      let gb = ceil(Double(requiredTotalMb) / 1024.0)
+      // Reverse the budget formula to find required total RAM:
+      // budget = total * 0.75 - overhead => total = (budget + overhead) / 0.75
+      let requiredBudgetMb = Double(estimatedMemoryUsageMb)
+      let requiredTotalMb = (requiredBudgetMb + Self.memOverheadMb) / 0.75
+      let gb = ceil(requiredTotalMb / 1024.0)
 
       let commonSizes: [Double] = [8, 16, 18, 24, 32, 36, 48, 64, 96, 128, 192]
       let displayGb = commonSizes.first(where: { $0 >= gb }) ?? gb

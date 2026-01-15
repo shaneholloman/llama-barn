@@ -395,11 +395,9 @@ final class MenuController: NSObject, NSMenuDelegate {
           "Higher context lengths use more memory. The app may reduce the context length to stay within a safe memory budget."
       }
 
-      let sysMemGb = Double(sysMemMb) / 1024.0
-      let fraction = CatalogEntry.availableMemoryFraction(forSystemMemoryMb: sysMemMb)
-      let budgetGb = sysMemGb * fraction
-
-      let budgetGbRounded = Int(budgetGb.rounded())
+      // Calculate budget using the same formula as CatalogEntry.memoryBudget()
+      let budgetMb = CatalogEntry.memoryBudget(systemMemoryMb: sysMemMb)
+      let budgetGbRounded = Int((budgetMb / 1024.0).rounded())
 
       return
         "Higher context lengths use more memory. The app may reduce the context length to stay within a safe memory budget: \(budgetGbRounded)\u{00A0}GB on this Mac."
