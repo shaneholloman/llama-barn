@@ -82,12 +82,12 @@ enum UserSettings {
   }
 
   /// How long to wait before unloading the model from memory when idle.
-  /// Defaults to -1 (disabled).
+  /// Defaults to 5 minutes.
   static var sleepIdleTime: SleepIdleTime {
     get {
       let value = defaults.integer(forKey: Keys.sleepIdleTime)
-      // 0 is returned if key is missing, which is not a valid case, so fallback to .disabled (-1)
-      return SleepIdleTime(rawValue: value) ?? .disabled
+      // 0 is returned if key is missing, which is not a valid case, so fallback to .fiveMin
+      return SleepIdleTime(rawValue: value) ?? .fiveMin
     }
     set {
       guard defaults.integer(forKey: Keys.sleepIdleTime) != newValue.rawValue else { return }
