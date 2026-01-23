@@ -125,3 +125,7 @@ struct SettingsView: View {
       "Higher context lengths use more memory. The app may reduce the context length to stay within a safe memory budget: \(budgetGbRounded) GB on this Mac."
   }
 }
+
+#Preview {
+  SettingsView()
+}
