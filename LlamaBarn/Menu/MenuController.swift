@@ -258,7 +258,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     let familyView = FamilyItemView(
       family: "Installed",
       sizes: [],
-      linkText: "/models",
+      linkText: "models",
       linkUrl: modelsUrl
     )
     let familyItem = NSMenuItem.viewItem(with: familyView)
