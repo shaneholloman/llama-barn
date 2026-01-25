@@ -316,6 +316,10 @@ final class MenuController: NSObject, NSMenuDelegate {
           items.append(NSMenuItem.viewItem(with: variantView))
         }
 
+        // Size on disk row
+        let sizeView = ModelSizeView(model: model, actionHandler: actionHandler)
+        items.append(NSMenuItem.viewItem(with: sizeView))
+
         // Delete action
         let actionsView = ModelActionsView(model: model, actionHandler: actionHandler)
         items.append(NSMenuItem.viewItem(with: actionsView))
