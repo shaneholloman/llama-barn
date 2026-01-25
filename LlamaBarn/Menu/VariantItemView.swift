@@ -12,7 +12,7 @@ final class VariantItemView: ItemView {
   private let copyAction: (String) -> Void
 
   private let infoLabel = Theme.secondaryLabel()
-  private let copyButton = NSButton()
+  private let copyButton = HoverButton()
   private let loadedIndicator = Theme.secondaryLabel()
 
   init(

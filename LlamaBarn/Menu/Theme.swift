@@ -1,5 +1,33 @@
 import AppKit
 
+// MARK: - HoverButton
+
+/// A text-styled button that darkens on hover for better interactivity feedback.
+/// Used for text links like "(copy model ID)" in the expanded model view.
+final class HoverButton: NSButton {
+  override func updateTrackingAreas() {
+    super.updateTrackingAreas()
+
+    // .inVisibleRect: AppKit auto-tracks visible bounds (rect param ignored)
+    // .activeAlways: works even when app isn't frontmost (needed for menu bar apps)
+    let area = NSTrackingArea(
+      rect: .zero,
+      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    addTrackingArea(area)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    contentTintColor = Theme.Colors.modelIconTint
+  }
+
+  override func mouseExited(with event: NSEvent) {
+    contentTintColor = Theme.Colors.textSecondary
+  }
+}
+
 // Theme provides centralized styling for the app's UI
 enum Theme {
   // Colors used throughout the app
