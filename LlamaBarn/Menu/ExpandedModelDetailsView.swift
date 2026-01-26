@@ -165,7 +165,7 @@ final class ExpandedModelDetailsView: ItemView {
     let showInFinderButton = HoverButton()
     showInFinderButton.title = "Show in Finder"
     showInFinderButton.font = Theme.Fonts.secondary
-    showInFinderButton.contentTintColor = Theme.Colors.modelIconTint
+    showInFinderButton.contentTintColor = Theme.Colors.textSecondary
     showInFinderButton.target = self
     showInFinderButton.action = #selector(didClickShowInFinder)
 
@@ -177,7 +177,7 @@ final class ExpandedModelDetailsView: ItemView {
     let showOnHFButton = HoverButton()
     showOnHFButton.title = "Show on HF"
     showOnHFButton.font = Theme.Fonts.secondary
-    showOnHFButton.contentTintColor = Theme.Colors.modelIconTint
+    showOnHFButton.contentTintColor = Theme.Colors.textSecondary
     showOnHFButton.target = self
     showOnHFButton.action = #selector(didClickShowOnHF)
 
@@ -189,7 +189,7 @@ final class ExpandedModelDetailsView: ItemView {
     let deleteButton = HoverButton()
     deleteButton.title = "Delete"
     deleteButton.font = Theme.Fonts.secondary
-    deleteButton.contentTintColor = Theme.Colors.modelIconTint
+    deleteButton.contentTintColor = Theme.Colors.textSecondary
     deleteButton.target = self
     deleteButton.action = #selector(didClickDelete)
 
