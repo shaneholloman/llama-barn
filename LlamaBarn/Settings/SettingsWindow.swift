@@ -34,7 +34,7 @@ final class SettingsWindowController {
 
     // Create the window
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 340, height: 200),
+      contentRect: NSRect(x: 0, y: 0, width: 340, height: 280),
       styleMask: [.titled, .closable],
       backing: .buffered,
       defer: false
@@ -56,6 +56,7 @@ final class SettingsWindowController {
 struct SettingsView: View {
   @State private var launchAtLogin = LaunchAtLogin.isEnabled
   @State private var sleepIdleTime = UserSettings.sleepIdleTime
+  @State private var enabledTiers = UserSettings.enabledContextTiers
 
   var body: some View {
     Form {
@@ -80,6 +81,45 @@ struct SettingsView: View {
         }
 
         Text("Automatically unloads the model from memory when not in use.")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
+
+      Divider()
+
+      // Context tiers selection
+      VStack(alignment: .leading, spacing: 8) {
+        Text("Context variants")
+          .font(.headline)
+
+        // Grid of toggles for each tier option
+        LazyVGrid(
+          columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+          ], spacing: 8
+        ) {
+          ForEach(UserSettings.ContextTierOption.allCases, id: \.self) { option in
+            Toggle(
+              option.label,
+              isOn: Binding(
+                get: { enabledTiers.contains(option.rawValue) },
+                set: { enabled in
+                  if enabled {
+                    enabledTiers.insert(option.rawValue)
+                  } else {
+                    enabledTiers.remove(option.rawValue)
+                  }
+                  UserSettings.enabledContextTiers = enabledTiers
+                }
+              )
+            )
+            .toggleStyle(.checkbox)
+          }
+        }
+
+        Text("Select which context lengths to show for installed models.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }

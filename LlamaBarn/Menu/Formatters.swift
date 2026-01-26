@@ -124,8 +124,8 @@ extension Format {
       ]
       result.append(NSAttributedString(string: incompatibility, attributes: warningAttr))
     } else {
-      // Context Tiers
-      for (index, tier) in ContextTier.allCases.sorted().enumerated() {
+      // Context Tiers (only show enabled tiers from user settings)
+      for (index, tier) in ContextTier.enabledCases.sorted().enumerated() {
         if index > 0 {
           result.append(Format.metadataSeparator())
         }

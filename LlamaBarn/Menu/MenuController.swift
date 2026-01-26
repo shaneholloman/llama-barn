@@ -154,6 +154,9 @@ final class MenuController: NSObject, NSMenuDelegate {
     // User settings changed - rebuild menu
     observe(.LBUserSettingsDidChange, rebuildMenu: true)
 
+    // Context tiers changed - rebuild menu to show updated variants
+    observe(.LBContextTiersDidChange, rebuildMenu: true)
+
     // Download failed - show alert
     let failObserver = NotificationCenter.default.addObserver(
       forName: .LBModelDownloadDidFail, object: nil, queue: .main
@@ -294,8 +297,8 @@ final class MenuController: NSObject, NSMenuDelegate {
         let headerView = ExpandedModelHeaderView()
         items.append(NSMenuItem.viewItem(with: headerView))
 
-        // Context tier variants
-        for tier in ContextTier.allCases {
+        // Context tier variants (only show enabled tiers from user settings)
+        for tier in ContextTier.enabledCases {
           let loadedId = server.loadedVariantId(for: model)
           let isLoaded: Bool = {
             guard let loadedId else { return false }

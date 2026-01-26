@@ -6,6 +6,7 @@ extension Notification.Name {
   static let LBModelDownloadsDidChange = Notification.Name("LBModelDownloadsDidChange")
   static let LBModelDownloadedListDidChange = Notification.Name("LBModelDownloadedListDidChange")
   static let LBUserSettingsDidChange = Notification.Name("LBUserSettingsDidChange")
+  static let LBContextTiersDidChange = Notification.Name("LBContextTiersDidChange")
   static let LBCheckForUpdates = Notification.Name("LBCheckForUpdates")
   static let LBShowSettings = Notification.Name("LBShowSettings")
   static let LBModelDownloadDidFail = Notification.Name("LBModelDownloadDidFail")

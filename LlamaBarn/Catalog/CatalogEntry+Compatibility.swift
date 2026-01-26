@@ -152,8 +152,9 @@ extension CatalogEntry {
   }
 
   /// Returns all context tiers that this model can support given device memory constraints.
+  /// Only includes tiers that are enabled in user settings.
   var supportedContextTiers: [ContextTier] {
-    ContextTier.allCases.filter { tier in
+    ContextTier.enabledCases.filter { tier in
       isCompatible(ctxWindowTokens: Double(tier.rawValue))
     }
   }
