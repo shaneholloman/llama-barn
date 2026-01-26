@@ -128,7 +128,7 @@ final class ExpandedModelDetailsView: ItemView {
         let copyButton = HoverButton()
         copyButton.title = "  (copy model ID)"
         copyButton.font = Theme.Fonts.secondary
-        copyButton.contentTintColor = Theme.Colors.textSecondary
+        copyButton.contentTintColor = Theme.Colors.modelIconTint
         copyButton.target = self
         copyButton.action = #selector(didClickCopy(_:))
         copyButton.tag = tier.rawValue
@@ -174,7 +174,7 @@ final class ExpandedModelDetailsView: ItemView {
     let showInFinderButton = HoverButton()
     showInFinderButton.title = "Show in Finder"
     showInFinderButton.font = Theme.Fonts.secondary
-    showInFinderButton.contentTintColor = Theme.Colors.textSecondary
+    showInFinderButton.contentTintColor = Theme.Colors.modelIconTint
     showInFinderButton.target = self
     showInFinderButton.action = #selector(didClickShowInFinder)
 
@@ -186,7 +186,7 @@ final class ExpandedModelDetailsView: ItemView {
     let deleteButton = HoverButton()
     deleteButton.title = "Delete"
     deleteButton.font = Theme.Fonts.secondary
-    deleteButton.contentTintColor = Theme.Colors.textSecondary
+    deleteButton.contentTintColor = Theme.Colors.modelIconTint
     deleteButton.target = self
     deleteButton.action = #selector(didClickDelete)
 

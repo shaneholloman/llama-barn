@@ -40,12 +40,12 @@ final class HoverButton: NSButton {
 
   override func mouseEntered(with event: NSEvent) {
     // Brighten on hover for interactivity feedback
-    contentTintColor = Theme.Colors.modelIconTint
+    contentTintColor = Theme.Colors.textPrimary
   }
 
   override func mouseExited(with event: NSEvent) {
-    // Return to default dim state
-    contentTintColor = Theme.Colors.textSecondary
+    // Return to default state
+    contentTintColor = Theme.Colors.modelIconTint
   }
 }
 
