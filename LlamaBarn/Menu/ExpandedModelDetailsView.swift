@@ -114,7 +114,7 @@ final class ExpandedModelDetailsView: ItemView {
 
     // Use checkmark/X mark to indicate support status
     let statusIcon = isCompatible ? "✓  " : "✗  "
-    let statusColor = isCompatible ? NSColor.systemGreen : secondaryColor
+    let statusColor = isCompatible ? Theme.Colors.success : secondaryColor
     let statusAttrs = Theme.secondaryAttributes(color: statusColor)
     result.append(NSAttributedString(string: statusIcon, attributes: statusAttrs))
     result.append(NSAttributedString(string: tier.label, attributes: valueAttrs))

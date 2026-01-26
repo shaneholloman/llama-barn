@@ -91,6 +91,12 @@ enum Theme {
       light: NSColor.black.withAlphaComponent(0.1),
       dark: NSColor.white.withAlphaComponent(0.15)
     )
+
+    // Success/checkmark color -- darker in light mode for better contrast
+    static let success = NSColor.dynamic(
+      light: NSColor(red: 0.2, green: 0.55, blue: 0.2, alpha: 1.0),
+      dark: NSColor.systemGreen
+    )
   }
 
   // Fonts used throughout the app
