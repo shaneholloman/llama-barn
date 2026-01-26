@@ -9,6 +9,7 @@ enum ContextTier: Int, CaseIterable, Identifiable, Comparable {
   case k32 = 32768
   case k64 = 65536
   case k128 = 131072
+  case k256 = 262144
 
   var id: Int { rawValue }
 
@@ -20,6 +21,7 @@ enum ContextTier: Int, CaseIterable, Identifiable, Comparable {
     case .k32: return "32k"
     case .k64: return "64k"
     case .k128: return "128k"
+    case .k256: return "256k"
     }
   }
 
