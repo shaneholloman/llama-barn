@@ -11,9 +11,9 @@ enum UserSettings {
     var displayName: String {
       switch self {
       case .disabled: return "Off"
-      case .fiveMin: return "5m"
-      case .fifteenMin: return "15m"
-      case .oneHour: return "1h"
+      case .fiveMin: return "5 min"
+      case .fifteenMin: return "15 min"
+      case .oneHour: return "1 hour"
       }
     }
   }
