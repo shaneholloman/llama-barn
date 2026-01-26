@@ -138,7 +138,7 @@ final class ExpandedModelDetailsView: ItemView {
       // Copy button only for compatible tiers
       if isCompatible {
         let copyButton = HoverButton()
-        copyButton.title = "  copy model ID"
+        copyButton.title = "  Copy ID"
         copyButton.font = Theme.Fonts.secondary
         copyButton.contentTintColor = Theme.Colors.modelIconTint
         copyButton.target = self
@@ -156,9 +156,9 @@ final class ExpandedModelDetailsView: ItemView {
     let idToCopy = "\(model.id)\(tier.suffix)"
     actionHandler.copyText(idToCopy)
 
-    sender.title = "  copied"
+    sender.title = "  Copied"
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak sender] in
-      sender?.title = "  copy model ID"
+      sender?.title = "  Copy ID"
     }
   }
 
