@@ -80,14 +80,12 @@ struct SettingsView: View {
       Section {
         VStack(alignment: .leading, spacing: 8) {
           LabeledContent("Unload when idle") {
-            Picker("Unload when idle", selection: $sleepIdleTime) {
+            Picker("", selection: $sleepIdleTime) {
               ForEach(UserSettings.SleepIdleTime.allCases, id: \.self) { time in
                 Text(time.displayName).tag(time)
               }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
-            .controlSize(.small)
             .fixedSize()
             .onChange(of: sleepIdleTime) { _, newValue in
               UserSettings.sleepIdleTime = newValue
