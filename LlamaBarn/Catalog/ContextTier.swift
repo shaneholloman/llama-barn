@@ -26,7 +26,7 @@ enum ContextTier: Int, CaseIterable, Identifiable, Comparable {
   }
 
   var suffix: String {
-    "-\(label)"
+    ":\(label)"
   }
 
   static func < (lhs: ContextTier, rhs: ContextTier) -> Bool {
