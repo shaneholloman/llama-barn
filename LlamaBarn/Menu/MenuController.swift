@@ -12,7 +12,7 @@ final class MenuController: NSObject, NSMenuDelegate {
 
   // Section State
   private var selectedFamily: String?
-  private var expandedModelId: String?
+  private var expandedModelIds: Set<String> = []
 
   private var welcomePopover: WelcomePopover?
 
@@ -89,6 +89,7 @@ final class MenuController: NSObject, NSMenuDelegate {
 
     // Reset section collapse state
     selectedFamily = nil
+    expandedModelIds.removeAll()
   }
 
   // MARK: - Menu Construction
@@ -275,7 +276,7 @@ final class MenuController: NSObject, NSMenuDelegate {
     var items = [NSMenuItem]()
 
     for model in models {
-      let isExpanded = expandedModelId == model.id
+      let isExpanded = expandedModelIds.contains(model.id)
 
       let view = ModelItemView(
         model: model,
@@ -302,10 +303,10 @@ final class MenuController: NSObject, NSMenuDelegate {
   }
 
   private func toggleExpansion(for modelId: String) {
-    if expandedModelId == modelId {
-      expandedModelId = nil
+    if expandedModelIds.contains(modelId) {
+      expandedModelIds.remove(modelId)
     } else {
-      expandedModelId = modelId
+      expandedModelIds.insert(modelId)
     }
     rebuildMenuIfPossible()
   }
