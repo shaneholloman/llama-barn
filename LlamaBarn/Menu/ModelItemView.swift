@@ -237,15 +237,11 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
       quantization: model.quantizationLabel
     )
 
-    // Determine if this model is currently running
-    let isRunning = server.isActive(model: model)
-
     let incompatibility = !isCompatible ? model.incompatibilitySummary() : nil
     subtitleLabel.attributedStringValue = Format.modelMetadata(
       for: model,
       color: textColor,
-      incompatibility: incompatibility,
-      isRunning: isRunning
+      incompatibility: incompatibility
     )
 
     if let progress {

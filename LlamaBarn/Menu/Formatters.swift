@@ -108,12 +108,10 @@ extension Format {
   /// Formats model metadata text.
   /// Format: "3.1 GB  ∣  128k" (file size + effective context tier)
   /// If incompatibility is provided: "Requires a Mac with 32 GB+ of memory"
-  /// If isRunning is true, the tier label is shown in blue.
   static func modelMetadata(
     for model: CatalogEntry,
     color: NSColor = Theme.Colors.textPrimary,
-    incompatibility: String? = nil,
-    isRunning: Bool = false
+    incompatibility: String? = nil
   ) -> NSAttributedString {
     let result = NSMutableAttributedString()
 
@@ -150,11 +148,7 @@ extension Format {
 
       // Show effective context tier (user selection or max compatible)
       if let tier = model.effectiveCtxTier {
-        var tierAttributes = attributes
-        if isRunning {
-          tierAttributes[.foregroundColor] = NSColor.controlAccentColor
-        }
-        result.append(NSAttributedString(string: tier.label, attributes: tierAttributes))
+        result.append(NSAttributedString(string: tier.label, attributes: attributes))
       }
     }
 
