@@ -15,13 +15,13 @@ enum ContextTier: Int, CaseIterable, Identifiable, Comparable {
 
   var label: String {
     switch self {
-    case .k4: return "4k"
-    case .k8: return "8k"
-    case .k16: return "16k"
-    case .k32: return "32k"
-    case .k64: return "64k"
-    case .k128: return "128k"
-    case .k256: return "256k"
+    case .k4: return "4k ctx"
+    case .k8: return "8k ctx"
+    case .k16: return "16k ctx"
+    case .k32: return "32k ctx"
+    case .k64: return "64k ctx"
+    case .k128: return "128k ctx"
+    case .k256: return "256k ctx"
     }
   }
 

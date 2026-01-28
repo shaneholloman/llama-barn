@@ -150,7 +150,7 @@ final class ExpandedModelDetailsView: ItemView {
 
     // Tier label and memory usage
     result.append(NSAttributedString(string: tier.label, attributes: valueAttrs))
-    result.append(NSAttributedString(string: " ctx on ", attributes: labelAttrs))
+    result.append(NSAttributedString(string: " on ", attributes: labelAttrs))
 
     let ramMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(tier.rawValue))
     let ramGb = Double(ramMb) / 1024.0
