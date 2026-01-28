@@ -189,22 +189,20 @@ class ModelManager: NSObject, URLSessionDownloadDelegate {
 
   private func generateModelsFileContent() -> String {
     var content = ""
+
     for model in downloadedModels {
+      // Use the effective tier (user selection or max compatible)
+      guard let tier = model.effectiveCtxTier else { continue }
+
       content += "[\(model.id)]\n"
       content += "model = \(model.modelFilePath)\n"
-
-      // Use the calculated usable context window to prevent OOM on devices with limited RAM.
-      // Falls back to the model's default if calculation fails (rare).
-      let ctxSize = model.usableCtxWindow() ?? model.ctxWindow
-      if ctxSize > 0 {
-        content += "ctx-size = \(ctxSize)\n"
-      }
+      content += "ctx-size = \(tier.rawValue)\n"
 
       if let mmproj = model.mmprojFilePath {
         content += "mmproj = \(mmproj)\n"
       }
 
-      // Enable larger batch size for better performance on high-memory devices (≥32 GB RAM)
+      // Enable larger batch size for better performance on high-memory devices (>=32 GB RAM)
       let systemMemoryGb = Double(SystemMemory.memoryMb) / 1024.0
       if systemMemoryGb >= 32.0 {
         content += "ubatch-size = 2048\n"

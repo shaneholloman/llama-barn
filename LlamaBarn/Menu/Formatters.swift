@@ -94,14 +94,19 @@ extension Format {
   // MARK: - Metadata Formatting
 
   /// Creates a bullet separator for metadata lines (e.g., "2.5 GB · 128k · 4 GB").
-  static func metadataSeparator() -> NSAttributedString {
-    NSAttributedString(string: " · ", attributes: Theme.tertiaryAttributes)
+  /// Optionally accepts a paragraph style to prevent letter spacing compression.
+  static func metadataSeparator(paragraphStyle: NSParagraphStyle? = nil) -> NSAttributedString {
+    var attrs = Theme.tertiaryAttributes
+    if let paragraphStyle {
+      attrs[.paragraphStyle] = paragraphStyle
+    }
+    return NSAttributedString(string: " · ", attributes: attrs)
   }
 
   // MARK: - Model Metadata (composite)
 
   /// Formats model metadata text.
-  /// Format: "2.53 GB · 128k ctx · 4.2 GB mem"
+  /// Format: "3.1 GB  ∣  128k" (file size + effective context tier)
   /// If incompatibility is provided: "Requires a Mac with 32 GB+ of memory"
   static func modelMetadata(
     for model: CatalogEntry,
@@ -110,54 +115,42 @@ extension Format {
   ) -> NSAttributedString {
     let result = NSMutableAttributedString()
 
+    // Paragraph style that prevents letter spacing compression before truncation
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.allowsDefaultTighteningForTruncation = false
+
     let attributes: [NSAttributedString.Key: Any] = [
       .font: Theme.Fonts.secondary,
       .foregroundColor: color,
+      .paragraphStyle: paragraphStyle,
     ]
 
     if let incompatibility = incompatibility {
       let warningAttr: [NSAttributedString.Key: Any] = [
         .font: Theme.Fonts.secondary,
         .foregroundColor: Theme.Colors.textSecondary,
+        .paragraphStyle: paragraphStyle,
       ]
       result.append(NSAttributedString(string: incompatibility, attributes: warningAttr))
     } else {
-      // Size on disk
+      // File size
+      result.append(NSAttributedString(string: model.totalSize, attributes: attributes))
+
+      // Pipe separator between file size and context tier
       result.append(
-        NSAttributedString(string: model.totalSize, attributes: attributes))
+        NSAttributedString(
+          string: "  ∣  ",
+          attributes: [
+            .font: Theme.Fonts.secondary,
+            .foregroundColor: Theme.Colors.textSecondary,
+            .paragraphStyle: paragraphStyle,
+          ]))
 
-      // Calculate desired tokens and usable context
-      let desiredTokens: Int = UserSettings.defaultContextWindow.rawValue * 1024
-
-      let displayUsableCtx =
-        model.usableCtxWindow(desiredTokens: desiredTokens, maximizeContext: false)
-        ?? Int(CatalogEntry.compatibilityCtxWindowTokens)
-
-      // Context info: always displayed as the context length the model would run at
-      result.append(Format.metadataSeparator())
-      let ctxLabel = Format.tokens(displayUsableCtx)
-      result.append(NSAttributedString(string: ctxLabel + " ctx", attributes: attributes))
-
-      // Memory usage
-      result.append(Format.metadataSeparator())
-      let memMb = model.runtimeMemoryUsageMb(ctxWindowTokens: Double(displayUsableCtx))
-      let memString = Format.memory(mb: memMb)
-
-      var memAttributes = attributes
-      let sysMem = SystemMemory.memoryMb
-      let budgetMb = CatalogEntry.memoryBudget(systemMemoryMb: sysMem)
-
-      // If estimated usage is close to budget (within 5MB), use italics
-      // to indicate we've hit the memory cap for context length.
-      if Double(memMb) >= (budgetMb - 5) {
-        memAttributes[.font] = NSFontManager.shared.convert(
-          Theme.Fonts.secondary, toHaveTrait: .italicFontMask)
+      // Show effective context tier (user selection or max compatible)
+      if let tier = model.effectiveCtxTier {
+        result.append(NSAttributedString(string: tier.label, attributes: attributes))
       }
-
-      result.append(NSAttributedString(string: memString + " mem", attributes: memAttributes))
     }
-
-    // Vision support removed - now shown in model name
 
     return result
   }

@@ -1,5 +1,54 @@
 import AppKit
 
+// MARK: - HoverButton
+
+/// A text-styled button that darkens on hover for better interactivity feedback.
+/// Used for text links like "(copy model ID)" in the expanded model view.
+/// Has no internal padding so it aligns with adjacent labels.
+final class HoverButton: NSButton {
+  override init(frame frameRect: NSRect) {
+    super.init(frame: frameRect)
+    // Use inline bezel for minimal chrome
+    bezelStyle = .inline
+    isBordered = false
+  }
+
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  // Remove internal padding by returning exact title size
+  override var intrinsicContentSize: NSSize {
+    guard let font = font, !title.isEmpty else { return super.intrinsicContentSize }
+    let attrs: [NSAttributedString.Key: Any] = [.font: font]
+    let size = (title as NSString).size(withAttributes: attrs)
+    // Add 1pt height buffer to prevent clipping
+    return NSSize(width: ceil(size.width), height: ceil(size.height) + 1)
+  }
+
+  override func updateTrackingAreas() {
+    super.updateTrackingAreas()
+
+    // .inVisibleRect: AppKit auto-tracks visible bounds (rect param ignored)
+    // .activeAlways: works even when app isn't frontmost (needed for menu bar apps)
+    let area = NSTrackingArea(
+      rect: .zero,
+      options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+      owner: self,
+      userInfo: nil
+    )
+    addTrackingArea(area)
+  }
+
+  override func mouseEntered(with event: NSEvent) {
+    // Brighten on hover for interactivity feedback
+    contentTintColor = Theme.Colors.textPrimary
+  }
+
+  override func mouseExited(with event: NSEvent) {
+    // Return to default state
+    contentTintColor = Theme.Colors.modelIconTint
+  }
+}
+
 // Theme provides centralized styling for the app's UI
 enum Theme {
   // Colors used throughout the app
@@ -41,6 +90,12 @@ enum Theme {
     static let separator = NSColor.dynamic(
       light: NSColor.black.withAlphaComponent(0.1),
       dark: NSColor.white.withAlphaComponent(0.15)
+    )
+
+    // Success/checkmark color -- darker in light mode for better contrast
+    static let success = NSColor.dynamic(
+      light: NSColor(red: 0.2, green: 0.55, blue: 0.2, alpha: 1.0),
+      dark: NSColor.systemGreen
     )
   }
 

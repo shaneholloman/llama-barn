@@ -6,6 +6,7 @@ final class HeaderView: ItemView {
 
   private unowned let server: LlamaServer
   private let appNameLabel = Theme.primaryLabel()
+  private let restartIcon = NSImageView()
   private let statusStackView = NSStackView()
   private let statusLabel = Theme.secondaryLabel()
   private let linkLabel = Theme.secondaryLabel()
@@ -15,6 +16,8 @@ final class HeaderView: ItemView {
   private var currentUrl: URL?
   private var webUiUrl: URL?
   private var showingCopyConfirmation = false
+  private var showingRestartIcon = false
+  private var restartIconHideTask: DispatchWorkItem?
 
   init(server: LlamaServer) {
     self.server = server
@@ -32,6 +35,17 @@ final class HeaderView: ItemView {
 
     appNameLabel.stringValue = "LlamaBarn"
 
+    // Restart icon -- shown briefly while server is restarting
+    Theme.configure(restartIcon, symbol: "arrow.trianglehead.2.clockwise", pointSize: 11)
+    restartIcon.contentTintColor = Theme.Colors.textSecondary
+    restartIcon.isHidden = true
+
+    // Title stack for horizontal layout of app name and restart icon
+    let titleStack = NSStackView(views: [appNameLabel, restartIcon])
+    titleStack.orientation = .horizontal
+    titleStack.spacing = 6
+    titleStack.alignment = .centerY
+
     // Status stack for horizontal layout of status elements
     statusStackView.translatesAutoresizingMaskIntoConstraints = false
     statusStackView.orientation = .horizontal
@@ -39,8 +53,8 @@ final class HeaderView: ItemView {
     statusStackView.alignment = .firstBaseline
     statusStackView.distribution = .fill
 
-    // Main stack for vertical layout of app name and status
-    let mainStack = NSStackView(views: [appNameLabel, statusStackView])
+    // Main stack for vertical layout of title row and status
+    let mainStack = NSStackView(views: [titleStack, statusStackView])
     mainStack.orientation = .vertical
     mainStack.alignment = .leading
     mainStack.spacing = Layout.textLineSpacing
@@ -71,9 +85,24 @@ final class HeaderView: ItemView {
   }
 
   func refresh() {
-    // Dim title while server is loading/reloading
-    appNameLabel.textColor =
-      server.isLoading ? Theme.Colors.textSecondary : Theme.Colors.textPrimary
+    // Show restart icon in debug builds only -- useful for development but
+    // exposes implementation details that users don't need to see
+    #if DEBUG
+      if server.isLoading && !showingRestartIcon {
+        showingRestartIcon = true
+        restartIconHideTask?.cancel()
+        restartIcon.isHidden = false
+      } else if !server.isLoading && showingRestartIcon {
+        // Delay hiding to ensure icon is visible for at least 250ms
+        restartIconHideTask?.cancel()
+        let task = DispatchWorkItem { [weak self] in
+          self?.showingRestartIcon = false
+          self?.restartIcon.isHidden = true
+        }
+        restartIconHideTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: task)
+      }
+    #endif
 
     // Connect to server info
     appNameLabel.stringValue = "LlamaBarn"

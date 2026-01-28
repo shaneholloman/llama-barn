@@ -44,7 +44,7 @@ final class FamilyItemView: ItemView {
 
       let row = NSStackView(views: [titleLabel, linkLabel])
       row.orientation = .horizontal
-      row.spacing = 6
+      row.spacing = 4
       row.alignment = .firstBaseline
       titleRow = row
     } else {

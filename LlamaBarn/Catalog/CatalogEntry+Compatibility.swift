@@ -36,10 +36,8 @@ extension CatalogEntry {
     let fileSizeWithOverheadMb = fileSizeWithOverhead
     if fileSizeWithOverheadMb > budgetMb { return nil }
 
-    let defaultContext =
-      maximizeContext
-      ? ctxWindow
-      : (UserSettings.defaultContextWindow.rawValue * 1024)
+    // Default to 4k context unless maximizing or explicitly requested
+    let defaultContext = maximizeContext ? ctxWindow : minimumTokens
     let effectiveDesired = desiredTokens.flatMap { $0 > 0 ? $0 : nil } ?? defaultContext
 
     let desiredTokensDouble = Double(effectiveDesired)
@@ -117,7 +115,13 @@ extension CatalogEntry {
     }
 
     if ctxWindowTokens > 0 && ctxWindowTokens > Double(ctxWindow) {
-      return CompatibilityInfo(isCompatible: false, incompatibilitySummary: nil)
+      // Model's native context window is smaller than requested
+      let maxTier = ContextTier.allCases.last { $0.rawValue <= ctxWindow }
+      let maxLabel = maxTier?.label ?? "\(ctxWindow / 1024)k"
+      return CompatibilityInfo(
+        isCompatible: false,
+        incompatibilitySummary: "model max is \(maxLabel)"
+      )
     }
 
     let sysMem = SystemMemory.memoryMb
@@ -151,6 +155,41 @@ extension CatalogEntry {
       isCompatible: isCompatible,
       incompatibilitySummary: isCompatible ? nil : memoryRequirementSummary()
     )
+  }
+
+  /// Returns all context tiers that this model can support given device memory constraints.
+  /// Shows all standard tiers (4K through 128K) that are compatible, plus 256K if supported.
+  var supportedContextTiers: [ContextTier] {
+    // Filter standard tiers to those compatible with this device
+    var tiers = ContextTier.standardTiers.filter { tier in
+      isCompatible(ctxWindowTokens: Double(tier.rawValue))
+    }
+
+    // Add 256K tier if compatible and not already included
+    if isCompatible(ctxWindowTokens: Double(ContextTier.k256.rawValue)),
+      !tiers.contains(.k256)
+    {
+      tiers.append(.k256)
+    }
+
+    return tiers.sorted()
+  }
+
+  /// The effective context tier for this model.
+  /// Returns user's selection if set and still compatible, otherwise the highest compatible tier.
+  var effectiveCtxTier: ContextTier? {
+    let supported = supportedContextTiers
+    guard !supported.isEmpty else { return nil }
+
+    // Check if user has a saved preference that's still valid
+    if let selected = UserSettings.selectedCtxTier(for: id),
+      supported.contains(selected)
+    {
+      return selected
+    }
+
+    // Default to highest compatible tier
+    return supported.last
   }
 
   private struct CompatibilityInfo {

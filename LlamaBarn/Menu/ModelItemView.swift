@@ -15,9 +15,22 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
   private let actionHandler: ModelActionHandler
   private let isInCatalog: Bool
 
+  // Internal state for expansion
+  private let isExpanded: Bool
+  private let onExpand: (() -> Void)?
+
   // Labels
   private let titleLabel = Theme.primaryLabel()
-  private let subtitleLabel = Theme.secondaryLabel()
+  private let subtitleLabel: NSTextField = {
+    let label = Theme.secondaryLabel()
+    // Single line with ellipsis truncation when hover buttons overlap
+    label.maximumNumberOfLines = 1
+    label.lineBreakMode = .byTruncatingTail
+    label.cell?.truncatesLastVisibleLine = true
+    // Prevent letter spacing compression before truncation
+    label.allowsDefaultTighteningForTruncation = false
+    return label
+  }()
   private let progressLabel: NSTextField = {
     let label = Theme.secondaryLabel()
     label.font = Theme.Fonts.primary
@@ -28,51 +41,56 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
   // Icon and action buttons
   private let iconView = IconView()
   private let cancelImageView = NSImageView()
-  private let finderButton = NSButton()
-  private let deleteButton = NSButton()
-  private let hfButton = NSButton()
-  private let copyIdButton = NSButton()
+  private let unloadButton = NSButton()
 
-  // State
-  private var showingActions = false
-  private var showingCopyConfirmation = false
+  // Hover action buttons (shown on hover for installed models)
+  private let copyIdButton = NSButton()
+  private let deleteButton = NSButton()
+  private let hoverButtonsStack = NSStackView()
 
   init(
     model: CatalogEntry, server: LlamaServer, modelManager: ModelManager,
-    actionHandler: ModelActionHandler, isInCatalog: Bool = false
+    actionHandler: ModelActionHandler, isInCatalog: Bool = false,
+    isExpanded: Bool = false, onExpand: (() -> Void)? = nil
   ) {
     self.model = model
     self.server = server
     self.modelManager = modelManager
     self.actionHandler = actionHandler
     self.isInCatalog = isInCatalog
+    self.isExpanded = isExpanded
+    self.onExpand = onExpand
     super.init(frame: .zero)
 
     iconView.imageView.image = NSImage(named: model.icon)
 
     // Configure action buttons
     Theme.configure(cancelImageView, symbol: "xmark", color: .systemRed)
-    Theme.configure(finderButton, symbol: "folder", tooltip: "Show in Finder")
-    Theme.configure(deleteButton, symbol: "trash", tooltip: "Delete model")
-    Theme.configure(hfButton, symbol: "globe", tooltip: "Open on Hugging Face")
-    Theme.configure(copyIdButton, symbol: "doc.on.doc", tooltip: "Copy model ID")
+    Theme.configure(unloadButton, symbol: "stop.circle", tooltip: "Unload model")
 
-    finderButton.target = self
-    finderButton.action = #selector(didClickFinder)
-    deleteButton.target = self
-    deleteButton.action = #selector(didClickDelete)
-    hfButton.target = self
-    hfButton.action = #selector(didClickHF)
+    unloadButton.target = self
+    unloadButton.action = #selector(didClickUnload)
+
+    // Configure hover action buttons
+    Theme.configure(copyIdButton, symbol: "doc.on.doc", tooltip: "Copy model ID")
+    Theme.configure(deleteButton, symbol: "trash", tooltip: "Delete model")
+
     copyIdButton.target = self
     copyIdButton.action = #selector(didClickCopyId)
+    deleteButton.target = self
+    deleteButton.action = #selector(didClickDelete)
+
+    // Configure hover buttons stack
+    hoverButtonsStack.orientation = .horizontal
+    hoverButtonsStack.spacing = 4
+    hoverButtonsStack.addArrangedSubview(copyIdButton)
+    hoverButtonsStack.addArrangedSubview(deleteButton)
 
     // Start hidden
     cancelImageView.isHidden = true
-    finderButton.isHidden = true
-    deleteButton.isHidden = true
-    hfButton.isHidden = true
-    copyIdButton.isHidden = true
+    unloadButton.isHidden = true
     progressLabel.isHidden = true
+    hoverButtonsStack.isHidden = true
 
     setupLayout()
     setupGestures()
@@ -103,7 +121,7 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
 
     // Accessory stack
     let accessoryStack = NSStackView(views: [
-      progressLabel, cancelImageView, copyIdButton, hfButton, finderButton, deleteButton,
+      progressLabel, cancelImageView, hoverButtonsStack, unloadButton,
     ])
     accessoryStack.orientation = .horizontal
     accessoryStack.alignment = .centerY
@@ -120,32 +138,25 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
 
     // Constraints
     Layout.constrainToIconSize(cancelImageView)
-    Layout.constrainToIconSize(finderButton)
-    Layout.constrainToIconSize(deleteButton)
-    Layout.constrainToIconSize(hfButton)
+    Layout.constrainToIconSize(unloadButton)
     Layout.constrainToIconSize(copyIdButton)
+    Layout.constrainToIconSize(deleteButton)
     progressLabel.widthAnchor.constraint(lessThanOrEqualToConstant: Layout.progressWidth).isActive =
       true
 
     titleLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
     titleLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+    // Allow subtitle to compress and truncate when hover buttons appear
+    subtitleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     progressLabel.setContentHuggingPriority(.required, for: .horizontal)
     progressLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
     cancelImageView.setContentHuggingPriority(.required, for: .horizontal)
     cancelImageView.setContentCompressionResistancePriority(.required, for: .horizontal)
-    finderButton.setContentHuggingPriority(.required, for: .horizontal)
-    finderButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-    hfButton.setContentHuggingPriority(.required, for: .horizontal)
-    hfButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-    copyIdButton.setContentHuggingPriority(.required, for: .horizontal)
-    copyIdButton.setContentCompressionResistancePriority(.required, for: .horizontal)
   }
 
   private func setupGestures() {
     let rowClickRecognizer = addGesture(action: #selector(didClickRow))
     rowClickRecognizer.delegate = self
-
-    addGesture(action: #selector(didRightClick), buttonMask: 0x2)
   }
 
   @objc private func didClickRow() {
@@ -153,47 +164,44 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
       NSSound.beep()
       return
     }
-    actionHandler.performPrimaryAction(for: model)
-    refresh()
-  }
 
-  @objc private func didClickDelete() {
-    showingActions = false
-    actionHandler.delete(model: model)
-  }
-
-  @objc private func didClickFinder() {
-    actionHandler.showInFinder(model: model)
-  }
-
-  @objc private func didClickHF() {
-    actionHandler.openHuggingFacePage(model: model)
-  }
-
-  @objc private func didClickCopyId() {
-    actionHandler.copyModelId(model: model)
-
-    // Show checkmark confirmation
-    showingCopyConfirmation = true
-    refresh()
-
-    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-      self?.showingCopyConfirmation = false
-      self?.refresh()
+    if modelManager.isInstalled(model) {
+      onExpand?()
+    } else {
+      actionHandler.performPrimaryAction(for: model)
+      refresh()
     }
   }
 
-  @objc private func didRightClick() {
-    showingActions.toggle()
-    refresh()
+  @objc private func didClickUnload() {
+    actionHandler.performPrimaryAction(for: model)
   }
 
-  // Prevent row toggle when clicking the action buttons (delete, finder, etc.).
+  @objc private func didClickCopyId() {
+    let pasteboard = NSPasteboard.general
+    pasteboard.clearContents()
+    pasteboard.setString(model.id, forType: .string)
+
+    // Show checkmark feedback
+    copyIdButton.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "Copied")
+
+    // Restore copy icon after delay
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+      self?.copyIdButton.image = NSImage(
+        systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy model ID")
+    }
+  }
+
+  @objc private func didClickDelete() {
+    actionHandler.delete(model: model)
+  }
+
+  // Prevent row toggle when clicking action buttons
   func gestureRecognizer(
     _ gestureRecognizer: NSGestureRecognizer, shouldAttemptToRecognizeWith event: NSEvent
   ) -> Bool {
     let loc = event.locationInWindow
-    let actionButtons = [deleteButton, finderButton, hfButton, copyIdButton]
+    let actionButtons = [unloadButton, copyIdButton, deleteButton]
     return !actionButtons.contains { view in
       !view.isHidden && view.bounds.contains(view.convert(loc, from: nil))
     }
@@ -241,18 +249,10 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
     }
     progressLabel.isHidden = !showAsDownloading
     cancelImageView.isHidden = !showAsDownloading
+    unloadButton.isHidden = !isActive
 
     iconView.inactiveTintColor =
       isCompatible ? Theme.Colors.modelIconTint : Theme.Colors.textSecondary
-
-    // Delete and finder buttons only for installed models on right-click
-    deleteButton.isHidden = !showingActions || !isInstalled
-    finderButton.isHidden = !showingActions || !isInstalled
-    hfButton.isHidden = !showingActions
-    copyIdButton.isHidden = !showingActions || !isInstalled
-
-    // Update copy icon based on confirmation state
-    Theme.updateCopyIcon(copyIdButton, showingConfirmation: showingCopyConfirmation)
 
     // Update icon state
     iconView.setLoading(isLoading)
@@ -270,19 +270,19 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
   }
 
   override func highlightDidChange(_ highlighted: Bool) {
-    // Reset delete button when mouse exits
-    if !highlighted && showingActions {
-      showingActions = false
-      refresh()
-    }
+    // Show hover buttons only for installed models that aren't active/downloading
+    let isInstalled = modelManager.isInstalled(model)
+    let isActive = server.isActive(model: model)
+    let isDownloading = modelManager.isDownloading(model)
+    let showHoverButtons = highlighted && isInstalled && !isActive && !isDownloading
+    hoverButtonsStack.isHidden = !showHoverButtons
   }
 
   override func viewDidChangeEffectiveAppearance() {
     super.viewDidChangeEffectiveAppearance()
     cancelImageView.contentTintColor = .systemRed
-    finderButton.contentTintColor = .tertiaryLabelColor
-    deleteButton.contentTintColor = .tertiaryLabelColor
-    hfButton.contentTintColor = .tertiaryLabelColor
+    unloadButton.contentTintColor = .tertiaryLabelColor
     copyIdButton.contentTintColor = .tertiaryLabelColor
+    deleteButton.contentTintColor = .tertiaryLabelColor
   }
 }

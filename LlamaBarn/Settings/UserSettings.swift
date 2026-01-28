@@ -2,22 +2,6 @@ import Foundation
 
 /// Centralized access to simple persisted preferences.
 enum UserSettings {
-  enum ContextWindowSize: Int, CaseIterable {
-    case fourK = 4
-    case thirtyTwoK = 32
-    case sixtyFourK = 64
-    case oneTwentyEightK = 128
-
-    var displayName: String {
-      switch self {
-      case .fourK: return "4k"
-      case .thirtyTwoK: return "32k"
-      case .sixtyFourK: return "64k"
-      case .oneTwentyEightK: return "128k"
-      }
-    }
-  }
-
   enum SleepIdleTime: Int, CaseIterable {
     case disabled = -1
     case fiveMin = 300
@@ -27,9 +11,9 @@ enum UserSettings {
     var displayName: String {
       switch self {
       case .disabled: return "Off"
-      case .fiveMin: return "5m"
-      case .fifteenMin: return "15m"
-      case .oneHour: return "1h"
+      case .fiveMin: return "5 min"
+      case .fifteenMin: return "15 min"
+      case .oneHour: return "1 hour"
       }
     }
   }
@@ -37,8 +21,8 @@ enum UserSettings {
   private enum Keys {
     static let hasSeenWelcome = "hasSeenWelcome"
     static let exposeToNetwork = "exposeToNetwork"
-    static let defaultContextWindow = "defaultContextWindow"
     static let sleepIdleTime = "sleepIdleTime"
+    static let selectedCtxTiers = "selectedCtxTiers"
   }
 
   private static let defaults = UserDefaults.standard
@@ -73,20 +57,6 @@ enum UserSettings {
     return nil
   }
 
-  /// The default context length in thousands of tokens.
-  /// Defaults to 4k.
-  static var defaultContextWindow: ContextWindowSize {
-    get {
-      let rawValue = defaults.integer(forKey: Keys.defaultContextWindow)
-      return ContextWindowSize(rawValue: rawValue) ?? .fourK
-    }
-    set {
-      guard defaults.integer(forKey: Keys.defaultContextWindow) != newValue.rawValue else { return }
-      defaults.set(newValue.rawValue, forKey: Keys.defaultContextWindow)
-      NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
-    }
-  }
-
   /// How long to wait before unloading the model from memory when idle.
   /// Defaults to 5 minutes.
   static var sleepIdleTime: SleepIdleTime {
@@ -100,5 +70,29 @@ enum UserSettings {
       defaults.set(newValue.rawValue, forKey: Keys.sleepIdleTime)
       NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
     }
+  }
+
+  // MARK: - Context Tier Preferences
+
+  /// Returns the user-selected context tier for a model, or nil if not set.
+  /// When nil, the model should use its highest compatible tier.
+  static func selectedCtxTier(for modelId: String) -> ContextTier? {
+    guard let dict = defaults.dictionary(forKey: Keys.selectedCtxTiers),
+      let rawValue = dict[modelId] as? Int
+    else { return nil }
+    return ContextTier(rawValue: rawValue)
+  }
+
+  /// Sets the user-selected context tier for a model.
+  /// Pass nil to clear the preference and use the default (highest compatible).
+  static func setSelectedCtxTier(_ tier: ContextTier?, for modelId: String) {
+    var dict = defaults.dictionary(forKey: Keys.selectedCtxTiers) ?? [:]
+    if let tier {
+      dict[modelId] = tier.rawValue
+    } else {
+      dict.removeValue(forKey: modelId)
+    }
+    defaults.set(dict, forKey: Keys.selectedCtxTiers)
+    NotificationCenter.default.post(name: .LBUserSettingsDidChange, object: nil)
   }
 }

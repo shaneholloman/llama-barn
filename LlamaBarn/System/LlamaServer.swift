@@ -293,6 +293,14 @@ class LlamaServer {
     return modelStatuses[model.id] == "loading"
   }
 
+  /// Returns the ID of the currently loaded variant for the given model, if any.
+  func loadedVariantId(for model: CatalogEntry) -> String? {
+    if modelStatuses[model.id] == "loaded" {
+      return model.id
+    }
+    return nil
+  }
+
   /// Switch the active model in the UI. In Router Mode, this doesn't restart the server,
   /// but updates what LlamaBarn considers the "current" model.
   func loadModel(_ model: CatalogEntry) {
@@ -318,10 +326,11 @@ class LlamaServer {
   func unloadModel(_ model: CatalogEntry) {
     // Optimistically set status to "unloaded" for immediate UI feedback.
     // The polling will confirm once the server acknowledges.
-    modelStatuses[model.id] = "unloaded"
+    let idToUnload = loadedVariantId(for: model) ?? model.id
+    modelStatuses[idToUnload] = "unloaded"
 
     Task {
-      _ = await api.unloadModel(id: model.id)
+      _ = await api.unloadModel(id: idToUnload)
     }
 
     if activeModelPath == model.modelFilePath {
