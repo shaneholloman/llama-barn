@@ -1,10 +1,12 @@
 # LlamaBarn
 
-LlamaBarn is a tiny menu bar app for running local LLMs.
+LlamaBarn is a macOS menu bar app for running local LLMs.
+
+[Watch a 2-minute intro](https://www.youtube.com/watch?v=7AieF7rZUTc) 📽️
 
 <br>
 
-![LlamaBarn](https://github.com/user-attachments/assets/e8c21c4c-d893-489a-a62c-eca8e7603d31)
+![LlamaBarn](https://github.com/user-attachments/assets/b447a485-9bbe-4290-ba42-5481aafa4af5)
 
 <br>
 
@@ -26,7 +28,7 @@ LlamaBarn runs a local server at `http://localhost:2276/v1`.
 - **Small footprint** — `12 MB` native macOS app
 - **Zero configuration** — models are auto-configured with optimal settings for your Mac
 - **Smart model catalog** — shows what fits your Mac, with quantized fallbacks for what doesn't
-- **Self-contained** — all models and config stored in `~/.llamabarn`
+- **Self-contained** — all models and config stored in `~/.llamabarn` (configurable)
 - **Built on llama.cpp** — from the GGML org, developed alongside llama.cpp
 
 ## Works with
