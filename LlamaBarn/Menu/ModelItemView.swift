@@ -178,17 +178,13 @@ final class ModelItemView: ItemView, NSGestureRecognizerDelegate {
   }
 
   @objc private func didClickCopyId() {
-    let pasteboard = NSPasteboard.general
-    pasteboard.clearContents()
-    pasteboard.setString(model.id, forType: .string)
-
-    // Show checkmark feedback
-    copyIdButton.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "Copied")
+    Clipboard.copy(model.id)
+    Theme.updateCopyIcon(copyIdButton, showingConfirmation: true)
 
     // Restore copy icon after delay
     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-      self?.copyIdButton.image = NSImage(
-        systemSymbolName: "doc.on.doc", accessibilityDescription: "Copy model ID")
+      guard let self else { return }
+      Theme.updateCopyIcon(self.copyIdButton, showingConfirmation: false)
     }
   }
 

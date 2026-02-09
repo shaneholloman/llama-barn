@@ -26,7 +26,19 @@ class LlamaServer {
   static let shared = LlamaServer()
 
   /// Default port for llama-server
-  static let defaultPort = 2276
+  nonisolated static let defaultPort = 2276
+
+  /// Returns the host string for server URLs.
+  /// If network bind address is set, uses that (resolving 0.0.0.0 to the actual local IP).
+  /// Otherwise defaults to "localhost".
+  static var resolvedHost: String {
+    if let bindAddr = UserSettings.networkBindAddress {
+      return bindAddr == "0.0.0.0"
+        ? (getLocalIpAddress() ?? "0.0.0.0")
+        : bindAddr
+    }
+    return "localhost"
+  }
 
   private let libFolderPath: String
   private var outputPipe: Pipe?
@@ -338,10 +350,6 @@ class LlamaServer {
     }
   }
 
-  func unloadModel() {
-    activeModelPath = nil
-  }
-
   private func cleanUpPipes() {
     outputPipe?.fileHandleForReading.readabilityHandler = nil
     errorPipe?.fileHandleForReading.readabilityHandler = nil
@@ -500,6 +508,4 @@ class LlamaServer {
 
     return nil
   }
-
-  // Removed: getLlamaCppVersion() — MenuController reads version directly.
 }

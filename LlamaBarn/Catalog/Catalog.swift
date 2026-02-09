@@ -3,12 +3,6 @@ import Foundation
 /// Static catalog of available AI models with their configurations and metadata
 enum Catalog {
 
-  // MARK: - Data Structures
-
-  // ModelFamily, ModelSize, and ModelBuild are now in their own files.
-
-  // MARK: - Public Data
-
   // MARK: - Public Accessors
 
   /// Returns all catalog entries by traversing the hierarchy
@@ -20,10 +14,6 @@ enum Catalog {
   static func findModel(id: String) -> CatalogEntry? {
     allModels().first { $0.id == id }
   }
-
-  // MARK: - Memory Calculations
-
-  // Moved to CatalogEntry+Compatibility.swift
 
   // MARK: - Private Helpers
 
