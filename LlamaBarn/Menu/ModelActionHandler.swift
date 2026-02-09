@@ -41,26 +41,6 @@ final class ModelActionHandler {
     onMembershipChange(model)
   }
 
-  func showInFinder(model: CatalogEntry) {
-    guard modelManager.isInstalled(model) else { return }
-    let url = URL(fileURLWithPath: model.modelFilePath)
-    NSWorkspace.shared.activateFileViewerSelecting([url])
-  }
-
-  func openHuggingFacePage(model: CatalogEntry) {
-    NSWorkspace.shared.open(model.huggingFaceUrl)
-  }
-
-  func copyModelId(model: CatalogEntry) {
-    copyText(model.id)
-  }
-
-  func copyText(_ text: String) {
-    let pasteboard = NSPasteboard.general
-    pasteboard.clearContents()
-    pasteboard.setString(text, forType: .string)
-  }
-
   private func startDownload(for model: CatalogEntry) {
     do {
       try modelManager.downloadModel(model)

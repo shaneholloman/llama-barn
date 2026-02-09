@@ -7,10 +7,7 @@ struct LlamaServerAPI {
   let port: Int
   private let logger = Logger(subsystem: Logging.subsystem, category: "LlamaServerAPI")
 
-  /// Default port for llama-server (matches LlamaServer.defaultPort)
-  static let defaultPort = 2276
-
-  init(port: Int = defaultPort) {
+  init(port: Int = LlamaServer.defaultPort) {
     self.port = port
   }
 
